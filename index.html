@@ -476,8 +476,24 @@
                             <div className="mb-2">
                                 Aktualisiert: {new Date(data.gasData.timestamp).toLocaleTimeString()} • Alle 30s refresh
                             </div>
-                            <div className="text-xs opacity-60">
+                            <div className="text-xs opacity-60 mb-4">
                                 {data.isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
+                            </div>
+                            <div className="flex items-center justify-center gap-4 mb-4">
+                                <a 
+                                    href="https://twitter.com/cryptosnapnews" 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-purple-300 hover:text-white transition-colors duration-300"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                    </svg>
+                                    <span>Follow @cryptosnapnews</span>
+                                </a>
+                            </div>
+                            <div className="text-xs opacity-40">
+                                Made with ❤️ for the Crypto Community
                             </div>
                         </div>
                     </div>
