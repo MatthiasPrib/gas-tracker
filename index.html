@@ -296,6 +296,103 @@
                             <div className="w-12 h-12 text-purple-400 animate-pulse mx-auto mb-4">
                                 <Fuel />
                             </div>
+
+                        {/* Tips & Optimization Section */}
+                        <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur border border-purple-500/30 rounded-xl p-6 mb-8">
+                            <h3 className="text-lg font-semibold text-purple-300 mb-4">💡 {currentCoin.name} Optimierungs-Tipps</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-200">
+                                {selectedCoin === 'ethereum' && (
+                                    <>
+                                        <div>• Nutze Layer 2 Lösungen wie Arbitrum, Optimism oder Polygon</div>
+                                        <div>• Wochenendmorgen haben oft niedrigere Gebühren</div>
+                                        <div>• "Langsam" für nicht-dringende Transaktionen verwenden</div>
+                                        <div>• Mehrere Transaktionen wenn möglich bündeln</div>
+                                        <div>• EIP-1559: Base Fee + Priority Fee beachten</div>
+                                        <div>• Gas-Tracker verwenden für optimales Timing</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'bitcoin' && (
+                                    <>
+                                        <div>• SegWit-Adressen verwenden (niedrigere vByte-Kosten)</div>
+                                        <div>• UTXOs während niedriger Gebühren konsolidieren</div>
+                                        <div>• Lightning Network für kleine, häufige Zahlungen</div>
+                                        <div>• Batch-Transaktionen für mehrere Empfänger</div>
+                                        <div>• Taproot-Adressen für komplexere Scripts</div>
+                                        <div>• Wochenend-Gebühren sind meist günstiger</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'solana' && (
+                                    <>
+                                        <div>• Konstant niedrige Gebühren (~0.00025$)</div>
+                                        <div>• Priority Fees für schnellere Verarbeitung</div>
+                                        <div>• Rent für Account-Erstellung beachten</div>
+                                        <div>• Fokus auf Netzwerk-Überlastung statt Gebühren</div>
+                                        <div>• Compute Units optimieren bei Smart Contracts</div>
+                                        <div>• Parallel-Transaktionen möglich</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'polygon' && (
+                                    <>
+                                        <div>• Extrem niedrige Gebühren - ideal für DeFi-Experimente</div>
+                                        <div>• Bridge-Kosten von Ethereum beachten</div>
+                                        <div>• MATIC für Gasgebühren in Wallet halten</div>
+                                        <div>• QuickSwap und SushiSwap für günstige Swaps</div>
+                                        <div>• Aave, Compound auf Polygon für günstige Lending</div>
+                                        <div>• EIP-1559 auch auf Polygon verfügbar</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'bnb' && (
+                                    <>
+                                        <div>• 95% günstiger als Ethereum für DeFi</div>
+                                        <div>• BNB für Gasgebühren benötigt</div>
+                                        <div>• PancakeSwap für niedrigste DEX-Gebühren</div>
+                                        <div>• Venus, Alpaca Finance für Yield Farming</div>
+                                        <div>• Validator-Rotation alle 24h beachten</div>
+                                        <div>• Cross-Chain-Bridges für Asset-Transfer</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'avalanche' && (
+                                    <>
+                                        <div>• Subnets für spezielle Anwendungen nutzen</div>
+                                        <div>• C-Chain für DeFi, X-Chain für Asset-Transfer</div>
+                                        <div>• Trader Joe, Pangolin für günstige Swaps</div>
+                                        <div>• AVAX für alle drei Chains benötigt</div>
+                                        <div>• Schnelle Finalisierung (~1-2 Sekunden)</div>
+                                        <div>• Benqi, Aave für Lending-Protokolle</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'arbitrum' && (
+                                    <>
+                                        <div>• 90-95% günstiger als Ethereum Mainnet</div>
+                                        <div>• Vollständige Ethereum-Kompatibilität</div>
+                                        <div>• 7-Tage-Wartezeit beim Withdrawal zu Mainnet</div>
+                                        <div>• Uniswap V3, SushiSwap nativ verfügbar</div>
+                                        <div>• Arbitrum Nova für Gaming und Social Apps</div>
+                                        <div>• ETH für Gasgebühren verwenden</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'optimism' && (
+                                    <>
+                                        <div>• Optimistic Rollups = Ethereum-Sicherheit</div>
+                                        <div>• OP-Token-Rewards für aktive Nutzer</div>
+                                        <div>• RetroPGF für Public Goods Funding</div>
+                                        <div>• Velodrome für effiziente Token-Swaps</div>
+                                        <div>• 7-Tage Challenge-Period beim Withdrawal</div>
+                                        <div>• Synthetix, Uniswap V3 als Haupt-DeFi-Protokolle</div>
+                                    </>
+                                )}
+                                {selectedCoin === 'tron' && (
+                                    <>
+                                        <div>• Viele Basis-Transaktionen völlig kostenfrei</div>
+                                        <div>• Energy/Bandwidth-System statt traditionellem Gas</div>
+                                        <div>• TRX staken für kostenlose Daily-Transaktionen</div>
+                                        <div>• SunSwap (V1 & V2) für Token-Exchanges</div>
+                                        <div>• JustLend für DeFi-Lending ohne hohe Gebühren</div>
+                                        <div>• USDT-TRC20 sehr beliebt für Stablecoin-Transfers</div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
                             <p className="text-purple-300">Loading {currentCoin.name} Data...</p>
                         </div>
                     </div>
