@@ -5,62 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gas Tracker - Live Crypto Fees für 9 Blockchains</title>
     <meta name="description" content="Echtzeitvergleich der Transaktionsgebühren für Ethereum, Bitcoin, Solana, Polygon, BNB Chain, Avalanche, Arbitrum, Optimism und TRON.">
-    <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, TRON, Crypto, Blockchain">
+    <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, TRON, Crypto">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     
     <style>
-        .animate-pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: .5; }
-        }
-        
-        .hover\:scale-105:hover {
-            transform: scale(1.05);
-        }
-        
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-
-        .coin-button {
-            min-width: 80px;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
-            font-weight: 500;
-            font-size: 0.875rem;
-        }
-
-        .coin-button.active {
-            transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .coin-button.inactive {
-            background-color: rgba(51, 65, 85, 0.6);
-            color: rgba(156, 163, 175, 1);
-        }
-
-        .coin-button.inactive:hover {
-            background-color: rgba(71, 85, 105, 0.8);
-            color: white;
-        }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
+        .hover\:scale-105:hover { transform: scale(1.05); }
+        .transition-all { transition: all 0.3s ease; }
     </style>
 </head>
 <body>
@@ -69,14 +25,12 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Simple SVG Icons
+        // Icons
         const Fuel = () => (
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" x2="15" y1="22" y2="22"></line>
-                <line x1="4" x2="14" y1="9" y2="9"></line>
                 <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path>
                 <path d="M14 13h2a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h2"></path>
-                <path d="M19 13v-2a1 1 0 0 0-1-1h-2"></path>
             </svg>
         );
 
@@ -107,25 +61,43 @@
             </svg>
         );
 
+        const Clock = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12,6 12,12 16,14"></polyline>
+            </svg>
+        );
+
+        const Zap = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
+            </svg>
+        );
+
         const MultiChainFeeTracker = () => {
-            // All 9 coins defined upfront
-            const allCoins = [
-                { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '⟠', gradient: 'from-blue-500 to-purple-600' },
-                { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', icon: '₿', gradient: 'from-orange-400 to-yellow-600' },
-                { id: 'solana', name: 'Solana', symbol: 'SOL', icon: '◎', gradient: 'from-purple-400 to-pink-600' },
-                { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '⬡', gradient: 'from-purple-500 to-indigo-600' },
-                { id: 'bnb', name: 'BNB Chain', symbol: 'BNB', icon: '🟡', gradient: 'from-yellow-400 to-orange-500' },
-                { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', icon: '🔺', gradient: 'from-red-400 to-red-600' },
-                { id: 'arbitrum', name: 'Arbitrum', symbol: 'ARB', icon: '🔵', gradient: 'from-blue-400 to-cyan-500' },
-                { id: 'optimism', name: 'Optimism', symbol: 'OP', icon: '🔴', gradient: 'from-red-500 to-pink-500' },
-                { id: 'tron', name: 'TRON', symbol: 'TRX', icon: '⚡', gradient: 'from-red-600 to-orange-600' }
+            // Alle 9 Blockchains
+            const coins = [
+                { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '⟠', color: 'from-blue-500 to-purple-600' },
+                { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', icon: '₿', color: 'from-orange-400 to-yellow-600' },
+                { id: 'solana', name: 'Solana', symbol: 'SOL', icon: '◎', color: 'from-purple-400 to-pink-600' },
+                { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '⬡', color: 'from-purple-500 to-indigo-600' },
+                { id: 'bnb', name: 'BNB Chain', symbol: 'BNB', icon: '🟡', color: 'from-yellow-400 to-orange-500' },
+                { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', icon: '🔺', color: 'from-red-400 to-red-600' },
+                { id: 'arbitrum', name: 'Arbitrum', symbol: 'ARB', icon: '🔵', color: 'from-blue-400 to-cyan-500' },
+                { id: 'optimism', name: 'Optimism', symbol: 'OP', icon: '🔴', color: 'from-red-500 to-pink-500' },
+                { id: 'tron', name: 'TRON', symbol: 'TRX', icon: '⚡', color: 'from-red-600 to-orange-600' }
             ];
 
             const [selectedCoin, setSelectedCoin] = useState('ethereum');
             const [loading, setLoading] = useState(true);
-            
-            // Default fee data for all chains
-            const defaultFeeData = {
+            const [data, setData] = useState({
+                gasData: { slow: 15, standard: 25, fast: 35, instant: 50, unit: 'gwei', timestamp: new Date().toISOString() },
+                prices: { ethereum: 3400, bitcoin: 67000, solana: 130, polygon: 0.85, bnb: 310, avalanche: 35, arbitrum: 1.2, optimism: 2.1, tron: 0.11 },
+                trends: { ethereum: 2.5, bitcoin: -1.2, solana: 5.8, polygon: 3.2, bnb: -0.8, avalanche: 4.1, arbitrum: 6.3, optimism: 2.7, tron: 1.5 },
+                isLive: false
+            });
+
+            const defaultGasData = {
                 ethereum: { slow: 15, standard: 25, fast: 35, instant: 50, unit: 'gwei' },
                 bitcoin: { slow: 5, standard: 10, fast: 20, instant: 30, unit: 'sat/vB' },
                 solana: { slow: 0.000005, standard: 0.000005, fast: 0.00001, instant: 0.000015, unit: 'SOL' },
@@ -137,50 +109,65 @@
                 tron: { slow: 0, standard: 0, fast: 1, instant: 2, unit: 'TRX' }
             };
 
-            // Default price data
-            const defaultPrices = {
-                ethereum: 3400, bitcoin: 67000, solana: 130, polygon: 0.85, bnb: 310,
-                avalanche: 35, arbitrum: 1.2, optimism: 2.1, tron: 0.11
-            };
-
-            const defaultTrends = {
-                ethereum: 2.5, bitcoin: -1.2, solana: 5.8, polygon: 3.2, bnb: -0.8,
-                avalanche: 4.1, arbitrum: 6.3, optimism: 2.7, tron: 1.5
-            };
-
-            const [feeData, setFeeData] = useState(defaultFeeData[selectedCoin]);
-            const [prices, setPrices] = useState(defaultPrices);
-            const [trends, setTrends] = useState(defaultTrends);
-            const [isLive, setIsLive] = useState(false);
-
-            // Fetch data function
+            // Daten laden
             const fetchData = async () => {
                 try {
-                    // Set fee data based on selected coin
-                    setFeeData({
-                        ...defaultFeeData[selectedCoin],
-                        timestamp: new Date().toISOString()
-                    });
+                    let gasData = { ...defaultGasData[selectedCoin] };
+                    
+                    // Ethereum Gas-Daten
+                    if (selectedCoin === 'ethereum') {
+                        try {
+                            const gasResponse = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle');
+                            const gasResult = await gasResponse.json();
+                            if (gasResult.status === '1' && gasResult.result) {
+                                gasData = {
+                                    slow: parseInt(gasResult.result.SafeGasPrice) || 15,
+                                    standard: parseInt(gasResult.result.ProposeGasPrice) || 25,
+                                    fast: parseInt(gasResult.result.FastGasPrice) || 35,
+                                    instant: Math.floor(parseInt(gasResult.result.FastGasPrice) * 1.5) || 50,
+                                    unit: 'gwei'
+                                };
+                            }
+                        } catch (e) { console.log('Ethereum API failed'); }
+                    }
 
-                    // Fetch live prices
+                    // Bitcoin Fee-Daten
+                    if (selectedCoin === 'bitcoin') {
+                        try {
+                            const btcResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
+                            const btcResult = await btcResponse.json();
+                            gasData = {
+                                slow: btcResult.hourFee || 5,
+                                standard: btcResult.halfHourFee || 10,
+                                fast: btcResult.fastestFee || 20,
+                                instant: Math.floor((btcResult.fastestFee || 20) * 1.5),
+                                unit: 'sat/vB'
+                            };
+                        } catch (e) { console.log('Bitcoin API failed'); }
+                    }
+
+                    // Preise laden
+                    let prices = data.prices;
+                    let trends = data.trends;
+                    let isLive = false;
+
                     try {
                         const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana,matic-network,binancecoin,avalanche-2,arbitrum,optimism,tron&vs_currencies=usd&include_24hr_change=true');
                         const priceResult = await priceResponse.json();
                         
                         if (priceResult && priceResult.ethereum) {
-                            const livePrices = {
-                                ethereum: priceResult.ethereum?.usd || defaultPrices.ethereum,
-                                bitcoin: priceResult.bitcoin?.usd || defaultPrices.bitcoin,
-                                solana: priceResult.solana?.usd || defaultPrices.solana,
-                                polygon: priceResult['matic-network']?.usd || defaultPrices.polygon,
-                                bnb: priceResult.binancecoin?.usd || defaultPrices.bnb,
-                                avalanche: priceResult['avalanche-2']?.usd || defaultPrices.avalanche,
-                                arbitrum: priceResult.arbitrum?.usd || defaultPrices.arbitrum,
-                                optimism: priceResult.optimism?.usd || defaultPrices.optimism,
-                                tron: priceResult.tron?.usd || defaultPrices.tron
+                            prices = {
+                                ethereum: priceResult.ethereum?.usd || 3400,
+                                bitcoin: priceResult.bitcoin?.usd || 67000,
+                                solana: priceResult.solana?.usd || 130,
+                                polygon: priceResult['matic-network']?.usd || 0.85,
+                                bnb: priceResult.binancecoin?.usd || 310,
+                                avalanche: priceResult['avalanche-2']?.usd || 35,
+                                arbitrum: priceResult.arbitrum?.usd || 1.2,
+                                optimism: priceResult.optimism?.usd || 2.1,
+                                tron: priceResult.tron?.usd || 0.11
                             };
-
-                            const liveTrends = {
+                            trends = {
                                 ethereum: priceResult.ethereum?.usd_24h_change || 0,
                                 bitcoin: priceResult.bitcoin?.usd_24h_change || 0,
                                 solana: priceResult.solana?.usd_24h_change || 0,
@@ -191,14 +178,14 @@
                                 optimism: priceResult.optimism?.usd_24h_change || 0,
                                 tron: priceResult.tron?.usd_24h_change || 0
                             };
-
-                            setPrices(livePrices);
-                            setTrends(liveTrends);
-                            setIsLive(true);
+                            isLive = true;
                         }
-                    } catch (e) {
-                        console.log('Price API failed, using defaults');
-                    }
+                    } catch (e) { console.log('Price API failed'); }
+
+                    setData({
+                        gasData: { ...gasData, timestamp: new Date().toISOString() },
+                        prices, trends, isLive
+                    });
 
                 } catch (error) {
                     console.error('Fetch error:', error);
@@ -207,33 +194,19 @@
                 }
             };
 
-            // Load data on mount and coin change
             useEffect(() => {
                 setLoading(true);
                 fetchData();
             }, [selectedCoin]);
 
-            // Auto refresh
             useEffect(() => {
                 const interval = setInterval(fetchData, 30000);
                 return () => clearInterval(interval);
             }, [selectedCoin]);
 
-            // Get current coin data
-            const currentCoin = allCoins.find(c => c.id === selectedCoin) || allCoins[0];
-            const currentPrice = prices[selectedCoin] || 0;
-            const currentTrend = trends[selectedCoin] || 0;
-
-            // Format values
-            const formatFeeValue = (value, coin) => {
-                if (coin === 'solana') return `${(value * 1000000).toFixed(0)} lamports`;
-                if (coin === 'tron' && value === 0) return 'Kostenlos';
-                return `${value} ${feeData.unit}`;
-            };
-
-            // Calculate cost
+            // Hilfsfunktionen
             const calculateCost = (gasPrice, gasLimit) => {
-                if (!gasPrice || !currentPrice) return 0;
+                if (!gasPrice || !data.prices[selectedCoin]) return 0;
                 
                 switch(selectedCoin) {
                     case 'ethereum':
@@ -241,19 +214,49 @@
                     case 'bnb':
                     case 'avalanche':
                     case 'arbitrum':
-                        return ((gasPrice * gasLimit) / 1000000000) * currentPrice;
+                        return ((gasPrice * gasLimit) / 1000000000) * data.prices[selectedCoin];
                     case 'bitcoin':
-                        return ((gasPrice * gasLimit / 100000000) * currentPrice);
+                        return ((gasPrice * gasLimit / 100000000) * data.prices[selectedCoin]);
                     case 'solana':
                     case 'optimism':
                     case 'tron':
-                        return gasPrice * currentPrice;
+                        return gasPrice * data.prices[selectedCoin];
                     default:
                         return 0;
                 }
             };
 
-            // Get transaction types
+            const formatGasValue = (value) => {
+                if (selectedCoin === 'solana') return `${(value * 1000000).toFixed(0)} lamports`;
+                if (selectedCoin === 'tron' && value === 0) return 'Kostenlos';
+                return `${value} ${data.gasData.unit}`;
+            };
+
+            const getNativeValue = (value) => {
+                switch(selectedCoin) {
+                    case 'ethereum':
+                        return `${(value / 1000000000).toFixed(8)} ETH`;
+                    case 'bitcoin':
+                        return `${value} sat/vB`;
+                    case 'solana':
+                        return `${value.toFixed(6)} SOL`;
+                    case 'polygon':
+                        return `${(value / 1000000000).toFixed(8)} MATIC`;
+                    case 'bnb':
+                        return `${(value / 1000000000).toFixed(8)} BNB`;
+                    case 'avalanche':
+                        return `${(value / 1000000000).toFixed(8)} AVAX`;
+                    case 'arbitrum':
+                        return `${(value / 1000000000).toFixed(8)} ETH`;
+                    case 'optimism':
+                        return `${value.toFixed(6)} ETH`;
+                    case 'tron':
+                        return value > 0 ? `${value} TRX` : '';
+                    default:
+                        return '';
+                }
+            };
+
             const getTransactionTypes = () => {
                 const types = {
                     ethereum: [
@@ -285,21 +288,157 @@
                         { name: 'Yield Farming', gasLimit: 350000, icon: '🌾' }
                     ]
                 };
-                
                 return types[selectedCoin] || types.ethereum;
             };
+
+            const currentCoin = coins.find(c => c.id === selectedCoin);
+            const currentPrice = data.prices[selectedCoin] || 0;
+            const currentTrend = data.trends[selectedCoin] || 0;
 
             if (loading) {
                 return (
                     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
                         <div className="text-center">
-                            <div className="w-12 h-12 text-purple-400 animate-pulse mx-auto mb-4">
-                                <Fuel />
-                            </div>
+                            <div className="w-12 h-12 text-purple-400 animate-pulse mx-auto mb-4"><Fuel /></div>
+                            <p className="text-purple-300">Loading {currentCoin?.name} Data...</p>
+                        </div>
+                    </div>
+                );
+            }
 
-                        {/* Tips & Optimization Section */}
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
+                    <div className="max-w-6xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <div className="flex items-center justify-center mb-4">
+                                <div className="w-8 h-8 text-purple-400 mr-3"><Fuel /></div>
+                                <h1 className="text-4xl font-bold text-white">Gas Tracker</h1>
+                            </div>
+                            <p className="text-purple-300 mb-6">Live Transaktionsgebühren für 9 Blockchains</p>
+                            
+                            {/* Coin Selector */}
+                            <div className="mb-6">
+                                <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-2xl p-4 mx-auto max-w-5xl">
+                                    <div className="flex flex-wrap justify-center gap-3">
+                                        {coins.map(coin => (
+                                            <button
+                                                key={coin.id}
+                                                onClick={() => setSelectedCoin(coin.id)}
+                                                className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 font-medium ${
+                                                    selectedCoin === coin.id 
+                                                        ? `bg-gradient-to-r ${coin.color} text-white shadow-lg transform scale-105` 
+                                                        : 'text-gray-300 bg-slate-700/50 hover:text-white hover:bg-slate-600/50'
+                                                }`}
+                                            >
+                                                <span className="text-lg">{coin.icon}</span>
+                                                <span className="text-sm">{coin.symbol}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Price Display */}
+                            <div className="flex items-center justify-center gap-6">
+                                <div className="flex items-center gap-2 text-purple-200">
+                                    <span className="font-semibold">{currentCoin?.symbol}:</span>
+                                    <span className="font-bold text-white text-xl">
+                                        ${currentPrice.toFixed(selectedCoin === 'bitcoin' ? 0 : 2)}
+                                    </span>
+                                    {data.isLive && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live data"></span>}
+                                    {!data.isLive && <span className="text-xs text-orange-400">(demo)</span>}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    {currentTrend > 0 ? <ArrowUp /> : currentTrend < 0 ? <ArrowDown /> : <Minus />}
+                                    <span className={currentTrend > 0 ? 'text-green-400' : currentTrend < 0 ? 'text-red-400' : 'text-gray-400'}>
+                                        {Math.abs(currentTrend).toFixed(1)}%
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fee Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            {['slow', 'standard', 'fast', 'instant'].map((speed) => {
+                                const speedConfig = {
+                                    slow: { icon: <Clock />, label: 'Langsam', color: 'text-green-400 bg-green-400/10 border-green-400/20', desc: 'Geld sparen', time: '~5 min' },
+                                    standard: { icon: <Minus />, label: 'Standard', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20', desc: 'Ausgewogen', time: '~2 min' },
+                                    fast: { icon: <Zap />, label: 'Schnell', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Schnell', time: '~30s' },
+                                    instant: { icon: <ArrowUp />, label: 'Sofort', color: 'text-red-400 bg-red-400/10 border-red-400/20', desc: 'Notfall', time: '~15s' }
+                                };
+                                
+                                const config = speedConfig[speed];
+                                
+                                return (
+                                    <div key={speed} className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 ${config.color}`}>
+                                        <div className="flex items-center justify-center mb-3">
+                                            {config.icon}
+                                            <span className="ml-2 font-semibold">{config.label}</span>
+                                        </div>
+                                        <div className="text-2xl font-bold text-white mb-1">
+                                            {formatGasValue(data.gasData[speed])}
+                                        </div>
+                                        <div className="text-sm opacity-70 mb-2">{config.desc}</div>
+                                        <div className="text-xs opacity-60 mb-1">{config.time}</div>
+                                        <div className="text-xs text-purple-300">
+                                            {getNativeValue(data.gasData[speed])}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Cost Calculator */}
+                        <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-xl p-6 mb-8">
+                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
+                                <div className="w-6 h-6 mr-2 text-purple-400"><TrendingUp /></div>
+                                {currentCoin?.name} Kostenrechner
+                            </h2>
+                            
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-slate-700">
+                                            <th className="text-left text-purple-300 py-3 px-2">Transaktionstyp</th>
+                                            <th className="text-center text-purple-300 py-3 px-2">
+                                                {selectedCoin === 'bitcoin' ? 'Größe (vBytes)' : selectedCoin === 'solana' ? 'Gebühr' : 'Gas Limit'}
+                                            </th>
+                                            <th className="text-center text-purple-300 py-3 px-2">Langsam</th>
+                                            <th className="text-center text-purple-300 py-3 px-2">Standard</th>
+                                            <th className="text-center text-purple-300 py-3 px-2">Schnell</th>
+                                            <th className="text-center text-purple-300 py-3 px-2">Sofort</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {getTransactionTypes().map((tx, index) => (
+                                            <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-700/20">
+                                                <td className="py-4 px-2">
+                                                    <div className="flex items-center">
+                                                        <span className="text-lg mr-3">{tx.icon}</span>
+                                                        <span className="text-white font-medium">{tx.name}</span>
+                                                    </div>
+                                                </td>
+                                                <td className="text-center py-4 px-2 text-purple-200">
+                                                    {selectedCoin === 'solana' ? '~0.000005 SOL' : tx.gasLimit.toLocaleString()}
+                                                </td>
+                                                {['slow', 'standard', 'fast', 'instant'].map(speed => (
+                                                    <td key={speed} className="text-center py-4 px-2">
+                                                        <div className="text-white font-medium">
+                                                            ${calculateCost(data.gasData[speed], tx.gasLimit).toFixed(4)}
+                                                        </div>
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Optimization Tips */}
                         <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur border border-purple-500/30 rounded-xl p-6 mb-8">
-                            <h3 className="text-lg font-semibold text-purple-300 mb-4">💡 {currentCoin.name} Optimierungs-Tipps</h3>
+                            <h3 className="text-lg font-semibold text-purple-300 mb-4">💡 {currentCoin?.name} Optimierungs-Tipps</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-200">
                                 {selectedCoin === 'ethereum' && (
                                     <>
@@ -393,150 +532,14 @@
                                 )}
                             </div>
                         </div>
-                            <p className="text-purple-300">Loading {currentCoin.name} Data...</p>
-                        </div>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-                    <div className="max-w-6xl mx-auto">
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-8 h-8 text-purple-400 mr-3">
-                                    <Fuel />
-                                </div>
-                                <h1 className="text-4xl font-bold text-white">Gas Tracker</h1>
-                            </div>
-                            <p className="text-purple-300 mb-6">Live Transaktionsgebühren für 9 Blockchains</p>
-                            
-                            {/* Coin Selector - Completely rebuilt */}
-                            <div className="mb-6">
-                                <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-2xl p-4 mx-auto max-w-5xl">
-                                    <div className="flex flex-wrap justify-center gap-3">
-                                        {allCoins.map((coin, index) => (
-                                            <button
-                                                key={`${coin.id}-${index}`}
-                                                onClick={() => {
-                                                    console.log(`Switching to ${coin.id}`);
-                                                    setSelectedCoin(coin.id);
-                                                }}
-                                                className={`coin-button ${
-                                                    selectedCoin === coin.id 
-                                                        ? `active bg-gradient-to-r ${coin.gradient} text-white` 
-                                                        : 'inactive'
-                                                }`}
-                                            >
-                                                <span className="text-lg">{coin.icon}</span>
-                                                <span className="font-semibold">{coin.symbol}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Price Display */}
-                            <div className="flex items-center justify-center gap-6">
-                                <div className="flex items-center gap-2 text-purple-200">
-                                    <span className="font-semibold">{currentCoin.symbol}:</span>
-                                    <span className="font-bold text-white text-xl">
-                                        ${currentPrice.toFixed(selectedCoin === 'bitcoin' ? 0 : 2)}
-                                    </span>
-                                    {isLive && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live data"></span>}
-                                    {!isLive && <span className="text-xs text-orange-400">(demo)</span>}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {currentTrend > 0 ? <ArrowUp /> : currentTrend < 0 ? <ArrowDown /> : <Minus />}
-                                    <span className={currentTrend > 0 ? 'text-green-400' : currentTrend < 0 ? 'text-red-400' : 'text-gray-400'}>
-                                        {Math.abs(currentTrend).toFixed(1)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Fee Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                            {['slow', 'standard', 'fast', 'instant'].map((speed) => {
-                                const speedConfig = {
-                                    slow: { label: 'Langsam', color: 'text-green-400 bg-green-400/10 border-green-400/20', desc: 'Geld sparen', time: '~5 min' },
-                                    standard: { label: 'Standard', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20', desc: 'Ausgewogen', time: '~2 min' },
-                                    fast: { label: 'Schnell', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Schnell', time: '~30s' },
-                                    instant: { label: 'Sofort', color: 'text-red-400 bg-red-400/10 border-red-400/20', desc: 'Notfall', time: '~15s' }
-                                };
-                                
-                                const config = speedConfig[speed];
-                                
-                                return (
-                                    <div key={speed} className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 ${config.color}`}>
-                                        <div className="mb-3">
-                                            <span className="font-semibold text-lg">{config.label}</span>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white mb-1">
-                                            {formatFeeValue(feeData[speed], selectedCoin)}
-                                        </div>
-                                        <div className="text-sm opacity-70 mb-2">{config.desc}</div>
-                                        <div className="text-xs opacity-60">{config.time}</div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Cost Calculator */}
-                        <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-xl p-6 mb-8">
-                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                                <div className="w-6 h-6 mr-2 text-purple-400">
-                                    <TrendingUp />
-                                </div>
-                                {currentCoin.name} Kostenrechner
-                            </h2>
-                            
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-slate-700">
-                                            <th className="text-left text-purple-300 py-3 px-2">Transaktionstyp</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Limit</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Langsam</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Standard</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Schnell</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Sofort</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {getTransactionTypes().map((tx, index) => (
-                                            <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-700/20">
-                                                <td className="py-4 px-2">
-                                                    <div className="flex items-center">
-                                                        <span className="text-lg mr-3">{tx.icon}</span>
-                                                        <span className="text-white font-medium">{tx.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="text-center py-4 px-2 text-purple-200">
-                                                    {tx.gasLimit.toLocaleString()}
-                                                </td>
-                                                {['slow', 'standard', 'fast', 'instant'].map(speed => (
-                                                    <td key={speed} className="text-center py-4 px-2">
-                                                        <div className="text-white font-medium">
-                                                            ${calculateCost(feeData[speed], tx.gasLimit).toFixed(4)}
-                                                        </div>
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
 
                         {/* Footer */}
                         <div className="text-center text-purple-400 text-sm">
                             <div className="mb-2">
-                                Aktualisiert: {new Date(feeData.timestamp || new Date()).toLocaleTimeString()} • Alle 30s refresh
+                                Aktualisiert: {new Date(data.gasData.timestamp).toLocaleTimeString()} • Alle 30s refresh
                             </div>
                             <div className="text-xs opacity-60 mb-4">
-                                {isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
+                                {data.isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
                             </div>
                             <div className="flex items-center justify-center gap-4 mb-4">
                                 <a 
