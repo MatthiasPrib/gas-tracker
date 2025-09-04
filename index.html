@@ -323,20 +323,20 @@
                             
                             {/* Coin Selector */}
                             <div className="flex justify-center mt-6 mb-4">
-                                <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-xl p-3 max-w-4xl">
-                                    <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-9 gap-2">
+                                <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-xl p-3 max-w-6xl w-full">
+                                    <div className="flex flex-wrap justify-center gap-2">
                                         {coins.map(coin => (
                                             <button
                                                 key={coin.id}
                                                 onClick={() => setSelectedCoin(coin.id)}
-                                                className={`flex flex-col items-center gap-1 px-2 py-3 rounded-lg transition-all duration-300 text-xs ${
+                                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 text-xs min-w-[60px] ${
                                                     selectedCoin === coin.id 
-                                                        ? `bg-gradient-to-r ${coin.color} text-white shadow-lg` 
+                                                        ? `bg-gradient-to-r ${coin.color} text-white shadow-lg scale-105` 
                                                         : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
                                                 }`}
                                             >
-                                                <span className="text-lg">{coin.icon}</span>
-                                                <span className="font-medium">{coin.symbol}</span>
+                                                <span className="text-base">{coin.icon}</span>
+                                                <span className="font-medium text-[10px]">{coin.symbol}</span>
                                             </button>
                                         ))}
                                     </div>
