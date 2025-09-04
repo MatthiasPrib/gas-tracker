@@ -7,6 +7,38 @@
     <meta name="description" content="Echtzeitvergleich der Transaktionsgebühren für Ethereum, Bitcoin, Solana, Polygon, BNB Chain, Avalanche, Arbitrum, Optimism und TRON.">
     <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, TRON, Crypto">
     
+    <!-- Google tag (gtag.js) - wird nur geladen wenn Cookie akzeptiert -->
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        
+        // Analytics nur laden wenn Cookies akzeptiert wurden
+        function loadGoogleAnalytics() {
+            var script = document.createElement('script');
+            script.async = true;
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-N4YD83MD1X';
+            document.head.appendChild(script);
+            
+            script.onload = function() {
+                gtag('js', new Date());
+                gtag('config', 'G-N4YD83MD1X', {
+                    'anonymize_ip': true,
+                    'cookie_flags': 'SameSite=None;Secure'
+                });
+            };
+        }
+        
+        // Cookie-Status prüfen
+        function checkCookieConsent() {
+            return localStorage.getItem('cookieConsent') === 'accepted';
+        }
+        
+        // Analytics laden wenn bereits zugestimmt
+        if (checkCookieConsent()) {
+            loadGoogleAnalytics();
+        }
+    </script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -17,10 +49,104 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .hover\:scale-105:hover { transform: scale(1.05); }
         .transition-all { transition: all 0.3s ease; }
+        
+        /* Cookie Banner Styles */
+        .cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 20px;
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .cookie-banner.show {
+            transform: translateY(0);
+        }
+        
+        .cookie-banner-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Cookie Banner -->
+    <div id="cookieBanner" class="cookie-banner">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-white text-sm">
+                <p class="mb-2"><strong>🍪 Cookie-Hinweis</strong></p>
+                <p>Diese Website verwendet Google Analytics, um die Nutzung zu analysieren und die Website zu verbessern. 
+                Durch Klick auf "Akzeptieren" stimmen Sie der Verwendung von Cookies zu.</p>
+            </div>
+            <div class="flex gap-3 flex-shrink-0">
+                <button 
+                    onclick="acceptCookies()" 
+                    class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-blue-700 transition-all duration-300"
+                >
+                    Akzeptieren
+                </button>
+                <button 
+                    onclick="declineCookies()" 
+                    class="bg-slate-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors duration-300"
+                >
+                    Ablehnen
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div id="root"></div>
+
+    <script>
+        // Cookie Banner Functions
+        function showCookieBanner() {
+            const banner = document.getElementById('cookieBanner');
+            if (banner && !checkCookieConsent() && localStorage.getItem('cookieConsent') !== 'declined') {
+                banner.classList.add('show');
+            }
+        }
+        
+        function hideCookieBanner() {
+            const banner = document.getElementById('cookieBanner');
+            if (banner) {
+                banner.classList.remove('show');
+                setTimeout(() => {
+                    banner.classList.add('cookie-banner-hidden');
+                }, 300);
+            }
+        }
+        
+        function acceptCookies() {
+            localStorage.setItem('cookieConsent', 'accepted');
+            loadGoogleAnalytics();
+            hideCookieBanner();
+            
+            // Event tracking für Cookie-Akzeptanz
+            setTimeout(() => {
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'cookie_consent', {
+                        'event_category': 'consent',
+                        'event_label': 'accepted'
+                    });
+                }
+            }, 1000);
+        }
+        
+        function declineCookies() {
+            localStorage.setItem('cookieConsent', 'declined');
+            hideCookieBanner();
+        }
+        
+        // Cookie Banner beim Laden anzeigen
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(showCookieBanner, 2000); // 2 Sekunden Verzögerung
+        });
+    </script>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
@@ -107,6 +233,18 @@
                 arbitrum: { slow: 0.1, standard: 0.2, fast: 0.5, instant: 1, unit: 'gwei' },
                 optimism: { slow: 0.001, standard: 0.002, fast: 0.005, instant: 0.01, unit: 'ETH' },
                 tron: { slow: 0, standard: 0, fast: 1, instant: 2, unit: 'TRX' }
+            };
+
+            // Analytics Event Tracking
+            const trackEvent = (eventName, coinId, speedType = null) => {
+                if (typeof gtag !== 'undefined' && checkCookieConsent()) {
+                    gtag('event', eventName, {
+                        'event_category': 'user_interaction',
+                        'coin_id': coinId,
+                        'speed_type': speedType,
+                        'custom_map': {'dimension1': coinId}
+                    });
+                }
             };
 
             // Daten laden
@@ -197,12 +335,20 @@
             useEffect(() => {
                 setLoading(true);
                 fetchData();
+                // Track page view
+                trackEvent('page_view', selectedCoin);
             }, [selectedCoin]);
 
             useEffect(() => {
                 const interval = setInterval(fetchData, 30000);
                 return () => clearInterval(interval);
             }, [selectedCoin]);
+
+            // Coin Selection mit Analytics
+            const handleCoinSelect = (coinId) => {
+                setSelectedCoin(coinId);
+                trackEvent('coin_selection', coinId);
+            };
 
             // Hilfsfunktionen
             const calculateCost = (gasPrice, gasLimit) => {
@@ -324,7 +470,7 @@
                                         {coins.map(coin => (
                                             <button
                                                 key={coin.id}
-                                                onClick={() => setSelectedCoin(coin.id)}
+                                                onClick={() => handleCoinSelect(coin.id)}
                                                 className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 font-medium ${
                                                     selectedCoin === coin.id 
                                                         ? `bg-gradient-to-r ${coin.color} text-white shadow-lg transform scale-105` 
@@ -371,7 +517,11 @@
                                 const config = speedConfig[speed];
                                 
                                 return (
-                                    <div key={speed} className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 ${config.color}`}>
+                                    <div 
+                                        key={speed} 
+                                        className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 cursor-pointer ${config.color}`}
+                                        onClick={() => trackEvent('fee_card_click', selectedCoin, speed)}
+                                    >
                                         <div className="flex items-center justify-center mb-3">
                                             {config.icon}
                                             <span className="ml-2 font-semibold">{config.label}</span>
@@ -547,6 +697,7 @@
                                     target="_blank" 
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-purple-300 hover:text-white transition-colors duration-300"
+                                    onClick={() => trackEvent('social_click', 'twitter')}
                                 >
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
