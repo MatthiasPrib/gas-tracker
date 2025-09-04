@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gas Tracker - Live Crypto Fees für Ethereum, Bitcoin & Solana</title>
-    <meta name="description" content="Echtzeitvergleich der Transaktionsgebühren für Ethereum, Bitcoin und Solana. Optimiere deine Crypto-Transaktionen und spare Gebühren.">
-    <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Crypto, Blockchain, Transaktionsgebühren">
+    <title>Gas Tracker - Live Crypto Fees für 9 Blockchains</title>
+    <meta name="description" content="Echtzeitvergleich der Transaktionsgebühren für Ethereum, Bitcoin, Solana, Polygon, BNB Chain, Avalanche, Arbitrum, Optimism und TRON.">
+    <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, TRON, Crypto, Blockchain">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -23,12 +23,8 @@
         }
         
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: .5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
         }
         
         .hover\:scale-105:hover {
@@ -38,6 +34,33 @@
         .transition-all {
             transition: all 0.3s ease;
         }
+
+        .coin-button {
+            min-width: 80px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .coin-button.active {
+            transform: scale(1.05);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .coin-button.inactive {
+            background-color: rgba(51, 65, 85, 0.6);
+            color: rgba(156, 163, 175, 1);
+        }
+
+        .coin-button.inactive:hover {
+            background-color: rgba(71, 85, 105, 0.8);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -46,9 +69,9 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Lucide Icons as simple SVG components
+        // Simple SVG Icons
         const Fuel = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" x2="15" y1="22" y2="22"></line>
                 <line x1="4" x2="14" y1="9" y2="9"></line>
                 <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path>
@@ -57,156 +80,125 @@
             </svg>
         );
 
-        const Clock = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12,6 12,12 16,14"></polyline>
-            </svg>
-        );
-
-        const Zap = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
-            </svg>
-        );
-
-        const Minus = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="5" x2="19" y1="12" y2="12"></line>
+        const TrendingUp = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"></polyline>
+                <polyline points="16,7 22,7 22,13"></polyline>
             </svg>
         );
 
         const ArrowUp = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" x2="12" y1="19" y2="5"></line>
                 <polyline points="5,12 12,5 19,12"></polyline>
             </svg>
         );
 
         const ArrowDown = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="12" x2="12" y1="5" y2="19"></line>
                 <polyline points="19,12 12,19 5,12"></polyline>
             </svg>
         );
 
-        const TrendingUp = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"></polyline>
-                <polyline points="16,7 22,7 22,13"></polyline>
+        const Minus = () => (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="5" x2="19" y1="12" y2="12"></line>
             </svg>
         );
 
         const MultiChainFeeTracker = () => {
-            const [selectedCoin, setSelectedCoin] = useState('ethereum');
-            const [loading, setLoading] = useState(true);
-            const [data, setData] = useState({
-                gasData: {
-                    slow: 15,
-                    standard: 25, 
-                    fast: 35,
-                    instant: 50,
-                    unit: 'gwei',
-                    timestamp: new Date().toISOString()
-                },
-                prices: {
-                    ethereum: 2500,
-                    bitcoin: 45000,
-                    solana: 100
-                },
-                trends: {
-                    ethereum: 2.5,
-                    bitcoin: -1.2,
-                    solana: 5.8
-                },
-                isLive: false
-            });
-
-            const coins = [
-                { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '⟠', color: 'from-blue-500 to-purple-600' },
-                { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', icon: '₿', color: 'from-orange-400 to-yellow-600' },
-                { id: 'solana', name: 'Solana', symbol: 'SOL', icon: '◎', color: 'from-purple-400 to-pink-600' }
+            // All 9 coins defined upfront
+            const allCoins = [
+                { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '⟠', gradient: 'from-blue-500 to-purple-600' },
+                { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', icon: '₿', gradient: 'from-orange-400 to-yellow-600' },
+                { id: 'solana', name: 'Solana', symbol: 'SOL', icon: '◎', gradient: 'from-purple-400 to-pink-600' },
+                { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '⬡', gradient: 'from-purple-500 to-indigo-600' },
+                { id: 'bnb', name: 'BNB Chain', symbol: 'BNB', icon: '🟡', gradient: 'from-yellow-400 to-orange-500' },
+                { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', icon: '🔺', gradient: 'from-red-400 to-red-600' },
+                { id: 'arbitrum', name: 'Arbitrum', symbol: 'ARB', icon: '🔵', gradient: 'from-blue-400 to-cyan-500' },
+                { id: 'optimism', name: 'Optimism', symbol: 'OP', icon: '🔴', gradient: 'from-red-500 to-pink-500' },
+                { id: 'tron', name: 'TRON', symbol: 'TRX', icon: '⚡', gradient: 'from-red-600 to-orange-600' }
             ];
 
-            const defaultGasData = {
+            const [selectedCoin, setSelectedCoin] = useState('ethereum');
+            const [loading, setLoading] = useState(true);
+            
+            // Default fee data for all chains
+            const defaultFeeData = {
                 ethereum: { slow: 15, standard: 25, fast: 35, instant: 50, unit: 'gwei' },
                 bitcoin: { slow: 5, standard: 10, fast: 20, instant: 30, unit: 'sat/vB' },
-                solana: { slow: 0.000005, standard: 0.000005, fast: 0.00001, instant: 0.000015, unit: 'SOL' }
+                solana: { slow: 0.000005, standard: 0.000005, fast: 0.00001, instant: 0.000015, unit: 'SOL' },
+                polygon: { slow: 1, standard: 2, fast: 5, instant: 10, unit: 'gwei' },
+                bnb: { slow: 3, standard: 5, fast: 8, instant: 12, unit: 'gwei' },
+                avalanche: { slow: 20, standard: 25, fast: 30, instant: 40, unit: 'nAVAX' },
+                arbitrum: { slow: 0.1, standard: 0.2, fast: 0.5, instant: 1, unit: 'gwei' },
+                optimism: { slow: 0.001, standard: 0.002, fast: 0.005, instant: 0.01, unit: 'ETH' },
+                tron: { slow: 0, standard: 0, fast: 1, instant: 2, unit: 'TRX' }
             };
+
+            // Default price data
+            const defaultPrices = {
+                ethereum: 3400, bitcoin: 67000, solana: 130, polygon: 0.85, bnb: 310,
+                avalanche: 35, arbitrum: 1.2, optimism: 2.1, tron: 0.11
+            };
+
+            const defaultTrends = {
+                ethereum: 2.5, bitcoin: -1.2, solana: 5.8, polygon: 3.2, bnb: -0.8,
+                avalanche: 4.1, arbitrum: 6.3, optimism: 2.7, tron: 1.5
+            };
+
+            const [feeData, setFeeData] = useState(defaultFeeData[selectedCoin]);
+            const [prices, setPrices] = useState(defaultPrices);
+            const [trends, setTrends] = useState(defaultTrends);
+            const [isLive, setIsLive] = useState(false);
 
             // Fetch data function
             const fetchData = async () => {
                 try {
-                    console.log('Fetching data...');
-                    
-                    // Fetch gas data based on selected coin
-                    let gasData = { ...defaultGasData[selectedCoin] };
-                    
-                    if (selectedCoin === 'ethereum') {
-                        try {
-                            const gasResponse = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle');
-                            const gasResult = await gasResponse.json();
-                            if (gasResult.status === '1' && gasResult.result) {
-                                gasData = {
-                                    slow: parseInt(gasResult.result.SafeGasPrice) || 15,
-                                    standard: parseInt(gasResult.result.ProposeGasPrice) || 25,
-                                    fast: parseInt(gasResult.result.FastGasPrice) || 35,
-                                    instant: Math.floor(parseInt(gasResult.result.FastGasPrice) * 1.5) || 50,
-                                    unit: 'gwei'
-                                };
-                            }
-                        } catch (e) {
-                            console.log('Ethereum API failed, using defaults');
-                        }
-                    } else if (selectedCoin === 'bitcoin') {
-                        try {
-                            const btcResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
-                            const btcResult = await btcResponse.json();
-                            gasData = {
-                                slow: btcResult.hourFee || 5,
-                                standard: btcResult.halfHourFee || 10,
-                                fast: btcResult.fastestFee || 20,
-                                instant: Math.floor((btcResult.fastestFee || 20) * 1.5),
-                                unit: 'sat/vB'
-                            };
-                        } catch (e) {
-                            console.log('Bitcoin API failed, using defaults');
-                        }
-                    }
+                    // Set fee data based on selected coin
+                    setFeeData({
+                        ...defaultFeeData[selectedCoin],
+                        timestamp: new Date().toISOString()
+                    });
 
-                    // Fetch prices
-                    let prices = data.prices;
-                    let trends = data.trends;
-                    let isLive = false;
-
+                    // Fetch live prices
                     try {
-                        const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana&vs_currencies=usd&include_24hr_change=true');
+                        const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana,matic-network,binancecoin,avalanche-2,arbitrum,optimism,tron&vs_currencies=usd&include_24hr_change=true');
                         const priceResult = await priceResponse.json();
                         
                         if (priceResult && priceResult.ethereum) {
-                            prices = {
-                                ethereum: priceResult.ethereum?.usd || 2500,
-                                bitcoin: priceResult.bitcoin?.usd || 45000,
-                                solana: priceResult.solana?.usd || 100
+                            const livePrices = {
+                                ethereum: priceResult.ethereum?.usd || defaultPrices.ethereum,
+                                bitcoin: priceResult.bitcoin?.usd || defaultPrices.bitcoin,
+                                solana: priceResult.solana?.usd || defaultPrices.solana,
+                                polygon: priceResult['matic-network']?.usd || defaultPrices.polygon,
+                                bnb: priceResult.binancecoin?.usd || defaultPrices.bnb,
+                                avalanche: priceResult['avalanche-2']?.usd || defaultPrices.avalanche,
+                                arbitrum: priceResult.arbitrum?.usd || defaultPrices.arbitrum,
+                                optimism: priceResult.optimism?.usd || defaultPrices.optimism,
+                                tron: priceResult.tron?.usd || defaultPrices.tron
                             };
-                            trends = {
+
+                            const liveTrends = {
                                 ethereum: priceResult.ethereum?.usd_24h_change || 0,
                                 bitcoin: priceResult.bitcoin?.usd_24h_change || 0,
-                                solana: priceResult.solana?.usd_24h_change || 0
+                                solana: priceResult.solana?.usd_24h_change || 0,
+                                polygon: priceResult['matic-network']?.usd_24h_change || 0,
+                                bnb: priceResult.binancecoin?.usd_24h_change || 0,
+                                avalanche: priceResult['avalanche-2']?.usd_24h_change || 0,
+                                arbitrum: priceResult.arbitrum?.usd_24h_change || 0,
+                                optimism: priceResult.optimism?.usd_24h_change || 0,
+                                tron: priceResult.tron?.usd_24h_change || 0
                             };
-                            isLive = true;
-                            console.log('Live prices loaded:', prices);
+
+                            setPrices(livePrices);
+                            setTrends(liveTrends);
+                            setIsLive(true);
                         }
                     } catch (e) {
                         console.log('Price API failed, using defaults');
                     }
-
-                    setData({
-                        gasData: { ...gasData, timestamp: new Date().toISOString() },
-                        prices,
-                        trends,
-                        isLive
-                    });
 
                 } catch (error) {
                     console.error('Fetch error:', error);
@@ -227,73 +219,75 @@
                 return () => clearInterval(interval);
             }, [selectedCoin]);
 
-            // Cost calculation
+            // Get current coin data
+            const currentCoin = allCoins.find(c => c.id === selectedCoin) || allCoins[0];
+            const currentPrice = prices[selectedCoin] || 0;
+            const currentTrend = trends[selectedCoin] || 0;
+
+            // Format values
+            const formatFeeValue = (value, coin) => {
+                if (coin === 'solana') return `${(value * 1000000).toFixed(0)} lamports`;
+                if (coin === 'tron' && value === 0) return 'Kostenlos';
+                return `${value} ${feeData.unit}`;
+            };
+
+            // Calculate cost
             const calculateCost = (gasPrice, gasLimit) => {
-                if (!gasPrice || !data.prices[selectedCoin]) return 0;
+                if (!gasPrice || !currentPrice) return 0;
                 
                 switch(selectedCoin) {
                     case 'ethereum':
-                        return ((gasPrice * gasLimit) / 1000000000) * data.prices.ethereum;
+                    case 'polygon':
+                    case 'bnb':
+                    case 'avalanche':
+                    case 'arbitrum':
+                        return ((gasPrice * gasLimit) / 1000000000) * currentPrice;
                     case 'bitcoin':
-                        return ((gasPrice * gasLimit / 100000000) * data.prices.bitcoin);
+                        return ((gasPrice * gasLimit / 100000000) * currentPrice);
                     case 'solana':
-                        return gasPrice * data.prices.solana;
+                    case 'optimism':
+                    case 'tron':
+                        return gasPrice * currentPrice;
                     default:
                         return 0;
                 }
             };
 
+            // Get transaction types
             const getTransactionTypes = () => {
-                switch(selectedCoin) {
-                    case 'ethereum':
-                        return [
-                            { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
-                            { name: 'ERC-20 Transfer', gasLimit: 65000, icon: '🪙' },
-                            { name: 'Uniswap Swap', gasLimit: 150000, icon: '🔄' },
-                            { name: 'NFT Mint', gasLimit: 200000, icon: '🖼️' },
-                            { name: 'DeFi Transaction', gasLimit: 350000, icon: '🏦' }
-                        ];
-                    case 'bitcoin':
-                        return [
-                            { name: 'Simple Transfer', gasLimit: 140, icon: '💸' },
-                            { name: 'Multi-Input TX', gasLimit: 250, icon: '🔗' },
-                            { name: 'SegWit Transfer', gasLimit: 110, icon: '⚡' },
-                            { name: 'Taproot Transfer', gasLimit: 100, icon: '🌿' },
-                            { name: 'Complex Script', gasLimit: 400, icon: '📜' }
-                        ];
-                    case 'solana':
-                        return [
-                            { name: 'Simple Transfer', gasLimit: 1, icon: '💸' },
-                            { name: 'Token Transfer', gasLimit: 1, icon: '🪙' },
-                            { name: 'DEX Swap', gasLimit: 1, icon: '🔄' },
-                            { name: 'NFT Mint', gasLimit: 1, icon: '🖼️' },
-                            { name: 'Program Interaction', gasLimit: 1, icon: '⚙️' }
-                        ];
-                    default:
-                        return [];
-                }
-            };
-
-            const getSpeedConfig = (speed) => {
-                const configs = {
-                    slow: { icon: <Clock />, color: 'text-green-400 bg-green-400/10 border-green-400/20', desc: 'Geld sparen', time: '~5 min' },
-                    standard: { icon: <Minus />, color: 'text-blue-400 bg-blue-400/10 border-blue-400/20', desc: 'Ausgewogen', time: '~2 min' },
-                    fast: { icon: <Zap />, color: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Schnell', time: '~30s' },
-                    instant: { icon: <ArrowUp />, color: 'text-red-400 bg-red-400/10 border-red-400/20', desc: 'Notfall', time: '~15s' }
+                const types = {
+                    ethereum: [
+                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
+                        { name: 'ERC-20 Transfer', gasLimit: 65000, icon: '🪙' },
+                        { name: 'Uniswap Swap', gasLimit: 150000, icon: '🔄' },
+                        { name: 'NFT Mint', gasLimit: 200000, icon: '🖼️' },
+                        { name: 'DeFi Transaction', gasLimit: 350000, icon: '🏦' }
+                    ],
+                    bitcoin: [
+                        { name: 'Simple Transfer', gasLimit: 140, icon: '💸' },
+                        { name: 'Multi-Input TX', gasLimit: 250, icon: '🔗' },
+                        { name: 'SegWit Transfer', gasLimit: 110, icon: '⚡' },
+                        { name: 'Taproot Transfer', gasLimit: 100, icon: '🌿' },
+                        { name: 'Complex Script', gasLimit: 400, icon: '📜' }
+                    ],
+                    polygon: [
+                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
+                        { name: 'Token Transfer', gasLimit: 65000, icon: '🪙' },
+                        { name: 'QuickSwap Trade', gasLimit: 120000, icon: '🔄' },
+                        { name: 'NFT Mint', gasLimit: 180000, icon: '🖼️' },
+                        { name: 'DeFi Interaction', gasLimit: 300000, icon: '🏦' }
+                    ],
+                    bnb: [
+                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
+                        { name: 'BEP-20 Transfer', gasLimit: 65000, icon: '🪙' },
+                        { name: 'PancakeSwap Trade', gasLimit: 150000, icon: '🥞' },
+                        { name: 'NFT Mint', gasLimit: 200000, icon: '🖼️' },
+                        { name: 'Yield Farming', gasLimit: 350000, icon: '🌾' }
+                    ]
                 };
-                return configs[speed] || configs.standard;
+                
+                return types[selectedCoin] || types.ethereum;
             };
-
-            const formatGasValue = (value) => {
-                if (selectedCoin === 'solana') {
-                    return `${(value * 1000000).toFixed(0)} lamports`;
-                }
-                return `${value} ${data.gasData.unit}`;
-            };
-
-            const currentCoin = coins.find(c => c.id === selectedCoin);
-            const currentPrice = data.prices[selectedCoin] || 0;
-            const currentTrend = data.trends[selectedCoin] || 0;
 
             if (loading) {
                 return (
@@ -302,7 +296,7 @@
                             <div className="w-12 h-12 text-purple-400 animate-pulse mx-auto mb-4">
                                 <Fuel />
                             </div>
-                            <p className="text-purple-300">Loading {currentCoin?.name} Data...</p>
+                            <p className="text-purple-300">Loading {currentCoin.name} Data...</p>
                         </div>
                     </div>
                 );
@@ -319,24 +313,27 @@
                                 </div>
                                 <h1 className="text-4xl font-bold text-white">Gas Tracker</h1>
                             </div>
-                            <p className="text-purple-300">Live Transaktionsgebühren für Ethereum, Bitcoin & Solana</p>
+                            <p className="text-purple-300 mb-6">Live Transaktionsgebühren für 9 Blockchains</p>
                             
-                            {/* Coin Selector */}
-                            <div className="flex justify-center mt-6 mb-4">
-                                <div className="bg-slate-800/50 backdrop-blur border border-slate-700/50 rounded-xl p-3 max-w-6xl w-full">
-                                    <div className="flex flex-wrap justify-center gap-2">
-                                        {coins.map(coin => (
+                            {/* Coin Selector - Completely rebuilt */}
+                            <div className="mb-6">
+                                <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-2xl p-4 mx-auto max-w-5xl">
+                                    <div className="flex flex-wrap justify-center gap-3">
+                                        {allCoins.map((coin, index) => (
                                             <button
-                                                key={coin.id}
-                                                onClick={() => setSelectedCoin(coin.id)}
-                                                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-300 text-xs min-w-[60px] ${
+                                                key={`${coin.id}-${index}`}
+                                                onClick={() => {
+                                                    console.log(`Switching to ${coin.id}`);
+                                                    setSelectedCoin(coin.id);
+                                                }}
+                                                className={`coin-button ${
                                                     selectedCoin === coin.id 
-                                                        ? `bg-gradient-to-r ${coin.color} text-white shadow-lg scale-105` 
-                                                        : 'text-gray-400 hover:text-white hover:bg-slate-700/50'
+                                                        ? `active bg-gradient-to-r ${coin.gradient} text-white` 
+                                                        : 'inactive'
                                                 }`}
                                             >
-                                                <span className="text-base">{coin.icon}</span>
-                                                <span className="font-medium text-[10px]">{coin.symbol}</span>
+                                                <span className="text-lg">{coin.icon}</span>
+                                                <span className="font-semibold">{coin.symbol}</span>
                                             </button>
                                         ))}
                                     </div>
@@ -344,21 +341,17 @@
                             </div>
                             
                             {/* Price Display */}
-                            <div className="flex items-center justify-center mt-4 gap-6">
+                            <div className="flex items-center justify-center gap-6">
                                 <div className="flex items-center gap-2 text-purple-200">
-                                    <span>{currentCoin?.symbol}:</span>
-                                    <span className="font-bold text-white">${currentPrice.toFixed(selectedCoin === 'bitcoin' ? 0 : 2)}</span>
-                                    {data.isLive && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live data"></span>}
-                                    {!data.isLive && <span className="text-xs text-orange-400">(demo)</span>}
+                                    <span className="font-semibold">{currentCoin.symbol}:</span>
+                                    <span className="font-bold text-white text-xl">
+                                        ${currentPrice.toFixed(selectedCoin === 'bitcoin' ? 0 : 2)}
+                                    </span>
+                                    {isLive && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live data"></span>}
+                                    {!isLive && <span className="text-xs text-orange-400">(demo)</span>}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    {currentTrend > 0 ? (
-                                        <ArrowUp />
-                                    ) : currentTrend < 0 ? (
-                                        <ArrowDown />
-                                    ) : (
-                                        <Minus />
-                                    )}
+                                    {currentTrend > 0 ? <ArrowUp /> : currentTrend < 0 ? <ArrowDown /> : <Minus />}
                                     <span className={currentTrend > 0 ? 'text-green-400' : currentTrend < 0 ? 'text-red-400' : 'text-gray-400'}>
                                         {Math.abs(currentTrend).toFixed(1)}%
                                     </span>
@@ -369,22 +362,22 @@
                         {/* Fee Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                             {['slow', 'standard', 'fast', 'instant'].map((speed) => {
-                                const config = getSpeedConfig(speed);
-                                const labels = {
-                                    slow: 'Langsam',
-                                    standard: 'Standard', 
-                                    fast: 'Schnell',
-                                    instant: 'Sofort'
+                                const speedConfig = {
+                                    slow: { label: 'Langsam', color: 'text-green-400 bg-green-400/10 border-green-400/20', desc: 'Geld sparen', time: '~5 min' },
+                                    standard: { label: 'Standard', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20', desc: 'Ausgewogen', time: '~2 min' },
+                                    fast: { label: 'Schnell', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Schnell', time: '~30s' },
+                                    instant: { label: 'Sofort', color: 'text-red-400 bg-red-400/10 border-red-400/20', desc: 'Notfall', time: '~15s' }
                                 };
+                                
+                                const config = speedConfig[speed];
                                 
                                 return (
                                     <div key={speed} className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 ${config.color}`}>
-                                        <div className="flex items-center justify-center mb-3">
-                                            {config.icon}
-                                            <span className="ml-2 font-semibold">{labels[speed]}</span>
+                                        <div className="mb-3">
+                                            <span className="font-semibold text-lg">{config.label}</span>
                                         </div>
                                         <div className="text-2xl font-bold text-white mb-1">
-                                            {formatGasValue(data.gasData[speed])}
+                                            {formatFeeValue(feeData[speed], selectedCoin)}
                                         </div>
                                         <div className="text-sm opacity-70 mb-2">{config.desc}</div>
                                         <div className="text-xs opacity-60">{config.time}</div>
@@ -394,12 +387,12 @@
                         </div>
 
                         {/* Cost Calculator */}
-                        <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-xl p-6">
+                        <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-xl p-6 mb-8">
                             <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
                                 <div className="w-6 h-6 mr-2 text-purple-400">
                                     <TrendingUp />
                                 </div>
-                                {currentCoin?.name} Kostenrechner
+                                {currentCoin.name} Kostenrechner
                             </h2>
                             
                             <div className="overflow-x-auto">
@@ -407,9 +400,7 @@
                                     <thead>
                                         <tr className="border-b border-slate-700">
                                             <th className="text-left text-purple-300 py-3 px-2">Transaktionstyp</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">
-                                                {selectedCoin === 'bitcoin' ? 'Größe (vBytes)' : selectedCoin === 'solana' ? 'Gebühr' : 'Gas Limit'}
-                                            </th>
+                                            <th className="text-center text-purple-300 py-3 px-2">Limit</th>
                                             <th className="text-center text-purple-300 py-3 px-2">Langsam</th>
                                             <th className="text-center text-purple-300 py-3 px-2">Standard</th>
                                             <th className="text-center text-purple-300 py-3 px-2">Schnell</th>
@@ -426,12 +417,12 @@
                                                     </div>
                                                 </td>
                                                 <td className="text-center py-4 px-2 text-purple-200">
-                                                    {selectedCoin === 'solana' ? '~0.000005 SOL' : tx.gasLimit.toLocaleString()}
+                                                    {tx.gasLimit.toLocaleString()}
                                                 </td>
                                                 {['slow', 'standard', 'fast', 'instant'].map(speed => (
                                                     <td key={speed} className="text-center py-4 px-2">
                                                         <div className="text-white font-medium">
-                                                            ${calculateCost(data.gasData[speed], tx.gasLimit).toFixed(4)}
+                                                            ${calculateCost(feeData[speed], tx.gasLimit).toFixed(4)}
                                                         </div>
                                                     </td>
                                                 ))}
@@ -442,92 +433,13 @@
                             </div>
                         </div>
 
-                        {/* Tips */}
-                        <div className="mt-8 bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur border border-purple-500/30 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-purple-300 mb-4">💡 {currentCoin?.name} Optimierungs-Tipps</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-200">
-                                {selectedCoin === 'ethereum' && (
-                                    <>
-                                        <div>• Nutze "Langsam" für nicht-dringende Transaktionen</div>
-                                        <div>• Wochenendmorgen haben oft niedrigere Gebühren</div>
-                                        <div>• Erwäge Layer 2 Lösungen wie Polygon</div>
-                                        <div>• Mehrere Transaktionen wenn möglich bündeln</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'bitcoin' && (
-                                    <>
-                                        <div>• SegWit-Adressen sparen Gebühren</div>
-                                        <div>• UTXOs während niedriger Gebühren konsolidieren</div>
-                                        <div>• Lightning Network für kleine Beträge nutzen</div>
-                                        <div>• Wochenendgebühren sind meist niedriger</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'solana' && (
-                                    <>
-                                        <div>• Gebühren sind konstant niedrig (~0.00025$)</div>
-                                        <div>• Kein Timing-Optimierung nötig</div>
-                                        <div>• Priority Fees für schnellere Verarbeitung</div>
-                                        <div>• Fokus auf Netzwerk-Überlastung statt Gebühren</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'polygon' && (
-                                    <>
-                                        <div>• Extrem niedrige Gebühren (~0.01-0.1$)</div>
-                                        <div>• Bridge-Kosten beachten bei ETH-MATIC Wechsel</div>
-                                        <div>• Nutze MATIC für Gasgebühren</div>
-                                        <div>• Ideal für häufige DeFi-Transaktionen</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'bnb' && (
-                                    <>
-                                        <div>• Deutlich günstiger als Ethereum</div>
-                                        <div>• BNB für Gasgebühren verwenden</div>
-                                        <div>• PancakeSwap für niedrigste Swap-Gebühren</div>
-                                        <div>• Validator-Zeiten beachten für beste Preise</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'avalanche' && (
-                                    <>
-                                        <div>• Schnelle Finalisierung (~1-2 Sekunden)</div>
-                                        <div>• AVAX für Transaktionsgebühren benötigt</div>
-                                        <div>• C-Chain für DeFi, X-Chain für Transfers</div>
-                                        <div>• Trader Joe für günstige Swaps nutzen</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'arbitrum' && (
-                                    <>
-                                        <div>• 90% günstiger als Ethereum Mainnet</div>
-                                        <div>• ETH für Gasgebühren verwenden</div>
-                                        <div>• 7-Tage Wartezeit beim Withdrawal</div>
-                                        <div>• Ideal für DeFi mit Ethereum-Kompatibilität</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'optimism' && (
-                                    <>
-                                        <div>• Sehr niedrige Transaktionskosten</div>
-                                        <div>• ETH für Gasgebühren nutzen</div>
-                                        <div>• Optimistic Rollups = Ethereum-Sicherheit</div>
-                                        <div>• OP-Token-Airdrops für aktive Nutzer</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'tron' && (
-                                    <>
-                                        <div>• Viele Transaktionen völlig kostenfrei</div>
-                                        <div>• Energy/Bandwidth System statt Gas</div>
-                                        <div>• TRX-Staking für kostenlose Transaktionen</div>
-                                        <div>• SunSwap für günstige Token-Swaps</div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
                         {/* Footer */}
-                        <div className="text-center mt-8 text-purple-400 text-sm">
+                        <div className="text-center text-purple-400 text-sm">
                             <div className="mb-2">
-                                Aktualisiert: {new Date(data.gasData.timestamp).toLocaleTimeString()} • Alle 30s refresh
+                                Aktualisiert: {new Date(feeData.timestamp || new Date()).toLocaleTimeString()} • Alle 30s refresh
                             </div>
                             <div className="text-xs opacity-60 mb-4">
-                                {data.isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
+                                {isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
                             </div>
                             <div className="flex items-center justify-center gap-4 mb-4">
                                 <a 
