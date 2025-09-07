@@ -3,285 +3,594 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Tools Suite - Gas Tracker, Arbitrage & Tax Calculator</title>
+    <title>Crypto Tools Suite - Live Gas Tracker, Arbitrage & Tax Calculator</title>
     <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/recharts@2.5.0/dist/index.min.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        body {
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --danger-gradient: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-muted: rgba(255, 255, 255, 0.4);
+        }
+        
+        * {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0f;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.08) 0%, transparent 50%);
             min-height: 100vh;
-            color: white;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
+            position: relative;
         }
         
+        /* Header Styles */
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 48px;
+            position: relative;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 300px;
+            height: 300px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.1;
+            z-index: -1;
         }
         
         .header h1 {
-            font-size: 2.5rem;
-            margin: 0;
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 900;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
         }
         
         .header p {
-            color: #a0a0a0;
-            margin-top: 10px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            font-weight: 400;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
+        /* Navigation Styles */
         .navigation {
             display: flex;
             justify-content: center;
-            margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 5px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 48px;
+            background: var(--glass-bg);
+            border-radius: 24px;
+            padding: 8px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 48px;
         }
         
         .nav-button {
             flex: 1;
-            padding: 15px 20px;
-            margin: 5px;
+            padding: 20px 24px;
+            margin: 4px;
             background: transparent;
             border: none;
-            border-radius: 10px;
-            color: #a0a0a0;
+            border-radius: 20px;
+            color: var(--text-secondary);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 1rem;
+            font-weight: 600;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            min-height: 60px;
+        }
+        
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            border-radius: 20px;
         }
         
         .nav-button:hover {
-            background: rgba(255, 255, 255, 0.1);
             color: white;
+            transform: translateY(-2px);
+        }
+        
+        .nav-button:hover::before {
+            opacity: 0.1;
         }
         
         .nav-button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            background: var(--primary-gradient);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
         }
         
+        .nav-button.active::before {
+            opacity: 0;
+        }
+        
+        /* Main Content Styles */
         .tool-content {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            padding: 30px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: var(--glass-bg);
+            border-radius: 32px;
+            padding: 48px;
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
         }
         
-        .gas-tracker .coin-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        .tool-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 48px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             gap: 20px;
-            margin-bottom: 30px;
+        }
+        
+        /* Gas Tracker Styles */
+        .coin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
         }
         
         .coin-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            background: var(--glass-bg);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
         
         .coin-card:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-5px);
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+        
+        .coin-card:hover::before {
+            opacity: 1;
         }
         
         .coin-header {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 20px;
+            margin-bottom: 24px;
         }
         
         .coin-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 800;
+            position: relative;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+        
+        .coin-icon::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .coin-name {
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.6rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--text-primary);
+        }
+        
+        .coin-symbol {
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 600;
         }
         
         .fee-display {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
         
         .fee-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #4ade80;
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .fee-usd {
-            color: #a0a0a0;
-            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 600;
         }
         
-        .arbitrage-finder .exchange-grid {
+        .loading-card {
+            background: var(--glass-bg);
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            border: 1px solid var(--glass-border);
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-card {
+            background: var(--glass-bg);
+            border-radius: 24px;
+            padding: 32px;
+            text-align: center;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .refresh-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 32px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .refresh-indicator i {
+            animation: spin 2s linear infinite;
+        }
+        
+        /* Arbitrage Styles */
+        .arbitrage-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
         }
         
         .arbitrage-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--glass-bg);
+            border-radius: 24px;
+            padding: 32px;
+            border: 1px solid var(--glass-border);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(20px);
+        }
+        
+        .arbitrage-card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
         }
         
         .opportunity {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: 1px solid #10b981;
-            animation: pulse 2s infinite;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.05) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            animation: pulse 3s infinite;
         }
         
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+            0% { 
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+                border-color: rgba(16, 185, 129, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+                border-color: rgba(16, 185, 129, 0.6);
+            }
+            100% { 
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+                border-color: rgba(16, 185, 129, 0.3);
+            }
         }
         
         .profit-badge {
-            background: #10b981;
+            background: var(--success-gradient);
             color: white;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
             float: right;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+            position: relative;
         }
         
-        .tax-calculator .form-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+        .profit-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+            border-radius: 16px;
         }
         
-        .form-group {
-            margin-bottom: 15px;
+        /* Cookie Banner */
+        .cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            z-index: 1000;
+            transform: translateY(100%);
+            animation: slideUp 0.5s ease-out forwards;
         }
         
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #e0e0e0;
+        @keyframes slideUp {
+            to { transform: translateY(0); }
         }
         
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
-            color: white;
+        .cookie-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        
+        .cookie-text {
+            flex: 1;
+            color: var(--text-primary);
             font-size: 1rem;
+            line-height: 1.6;
         }
         
-        .form-group input::placeholder {
-            color: #a0a0a0;
+        .cookie-buttons {
+            display: flex;
+            gap: 16px;
         }
         
-        .calculate-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .cookie-btn {
+            padding: 12px 24px;
             border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            color: white;
-            font-size: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 1rem;
         }
         
-        .calculate-btn:hover {
+        .cookie-btn.accept {
+            background: var(--success-gradient);
+            color: white;
+        }
+        
+        .cookie-btn.accept:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
         }
         
-        .result-card {
+        .cookie-btn.reject {
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin-top: 20px;
+            color: var(--text-secondary);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
+        .cookie-btn.reject:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+        
+        /* Social Links */
         .social-links {
             text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: 64px;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .social-links a {
-            color: #a0a0a0;
+            color: var(--text-secondary);
             text-decoration: none;
-            margin: 0 15px;
-            transition: color 0.3s ease;
+            margin: 0 16px;
+            padding: 16px 24px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
         }
         
         .social-links a:hover {
             color: white;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.2);
         }
         
+        /* Responsive Design */
         @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            
             .navigation {
                 flex-direction: column;
+                max-width: 100%;
             }
             
             .nav-button {
-                margin: 2px 0;
-            }
-            
-            .container {
-                padding: 10px;
+                margin: 4px 0;
+                flex: none;
             }
             
             .tool-content {
-                padding: 20px;
+                padding: 24px;
+            }
+            
+            .coin-grid, .arbitrage-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .cookie-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .cookie-buttons {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .social-links a {
+                margin: 8px;
+                padding: 12px 20px;
             }
         }
         
         .hidden {
             display: none;
+        }
+        
+        /* Status indicators */
+        .status-online {
+            color: #10b981;
+        }
+        
+        .status-offline {
+            color: #ef4444;
+        }
+        
+        .status-warning {
+            color: #f59e0b;
         }
     </style>
 </head>
@@ -293,262 +602,462 @@
             const [activeTab, setActiveTab] = React.useState('gas-tracker');
             const [gasData, setGasData] = React.useState({});
             const [arbitrageData, setArbitrageData] = React.useState([]);
-            const [taxResult, setTaxResult] = React.useState(null);
+            const [loading, setLoading] = React.useState({
+                gas: true,
+                arbitrage: true,
+                prices: true
+            });
+            const [errors, setErrors] = React.useState({});
+            const [showCookieBanner, setShowCookieBanner] = React.useState(true);
+            const [lastUpdate, setLastUpdate] = React.useState(new Date());
 
-            // Mock data for demonstration
-            React.useEffect(() => {
-                // Initialize mock data
-                setGasData({
-                    ETH: { fee: '25', usd: '$2.45', unit: 'gwei', network: 'Ethereum' },
-                    BTC: { fee: '15', usd: '$8.50', unit: 'sat/vB', network: 'Bitcoin' },
-                    SOL: { fee: '5000', usd: '$0.01', unit: 'lamports', network: 'Solana' },
-                    MATIC: { fee: '35', usd: '$0.03', unit: 'gwei', network: 'Polygon' },
-                    BNB: { fee: '5', usd: '$0.25', unit: 'gwei', network: 'BSC' },
-                    AVAX: { fee: '25', usd: '$0.65', unit: 'nAVAX', network: 'Avalanche' }
-                });
-
-                setArbitrageData([
-                    {
-                        coin: 'BTC',
-                        buyExchange: 'Binance',
-                        sellExchange: 'Kraken',
-                        buyPrice: 43250,
-                        sellPrice: 43680,
-                        profit: 1.0,
-                        profitUsd: 430
-                    },
-                    {
-                        coin: 'ETH',
-                        buyExchange: 'Coinbase',
-                        sellExchange: 'Bitstamp',
-                        buyPrice: 2640,
-                        sellPrice: 2665,
-                        profit: 0.95,
-                        profitUsd: 25
-                    },
-                    {
-                        coin: 'SOL',
-                        buyExchange: 'FTX',
-                        sellExchange: 'Huobi',
-                        buyPrice: 102.5,
-                        sellPrice: 103.8,
-                        profit: 1.27,
-                        profitUsd: 1.3
-                    }
-                ]);
-            }, []);
-
-            const calculateTax = () => {
-                // Mock tax calculation
-                const mockResult = {
-                    totalGains: 15420,
-                    taxableGains: 12850,
-                    tax: 3212.50,
-                    recommendation: "Haltefrist von einem Jahr beachten für steuerfreie Veräußerung"
-                };
-                setTaxResult(mockResult);
+            // API Configuration
+            const API_CONFIG = {
+                etherscan: 'https://api.etherscan.io/api',
+                coingecko: 'https://api.coingecko.com/api/v3',
+                mempool: 'https://mempool.space/api/v1/fees/recommended',
+                binance: 'https://api.binance.com/api/v3',
+                kraken: 'https://api.kraken.com/0/public'
             };
 
+            // Fetch Live Gas Data
+            const fetchGasData = async () => {
+                try {
+                    setLoading(prev => ({ ...prev, gas: true }));
+                    setErrors(prev => ({ ...prev, gas: null }));
+
+                    const responses = await Promise.allSettled([
+                        // Ethereum Gas
+                        fetch(`${API_CONFIG.etherscan}?module=gastracker&action=gasoracle&apikey=YourApiKeyToken`)
+                            .then(res => res.json()),
+                        
+                        // Bitcoin Fees
+                        fetch(API_CONFIG.mempool)
+                            .then(res => res.json()),
+                        
+                        // Crypto Prices from CoinGecko
+                        fetch(`${API_CONFIG.coingecko}/simple/price?ids=ethereum,bitcoin,solana,matic-network,binancecoin,avalanche-2&vs_currencies=usd`)
+                            .then(res => res.json()),
+                        
+                        // Polygon Gas (alternative endpoint)
+                        fetch('https://gasstation-mainnet.matic.network/v2')
+                            .then(res => res.json()),
+                    ]);
+
+                    const [ethGas, btcFees, prices, polygonGas] = responses;
+
+                    const newGasData = {};
+
+                    // Process Ethereum
+                    if (ethGas.status === 'fulfilled' && ethGas.value?.result) {
+                        const ethPrice = prices.status === 'fulfilled' ? prices.value.ethereum?.usd || 2500 : 2500;
+                        const gasPrice = ethGas.value.result.SafeGasPrice || '25';
+                        const gasCostUSD = (gasPrice * 21000 * ethPrice) / 1e18;
+                        
+                        newGasData.ETH = {
+                            fee: gasPrice,
+                            unit: 'gwei',
+                            network: 'Ethereum',
+                            usd: `$${gasCostUSD.toFixed(2)}`,
+                            status: 'online'
+                        };
+                    }
+
+                    // Process Bitcoin
+                    if (btcFees.status === 'fulfilled' && btcFees.value?.fastestFee) {
+                        const btcPrice = prices.status === 'fulfilled' ? prices.value.bitcoin?.usd || 43000 : 43000;
+                        const feeRate = btcFees.value.fastestFee;
+                        const avgTxSize = 250; // bytes
+                        const feeBTC = (feeRate * avgTxSize) / 100000000;
+                        const feeUSD = feeBTC * btcPrice;
+                        
+                        newGasData.BTC = {
+                            fee: feeRate.toString(),
+                            unit: 'sat/vB',
+                            network: 'Bitcoin',
+                            usd: `$${feeUSD.toFixed(2)}`,
+                            status: 'online'
+                        };
+                    }
+
+                    // Process other networks with live data or estimated values
+                    const solPrice = prices.status === 'fulfilled' ? prices.value.solana?.usd || 100 : 100;
+                    const maticPrice = prices.status === 'fulfilled' ? prices.value['matic-network']?.usd || 0.8 : 0.8;
+                    const bnbPrice = prices.status === 'fulfilled' ? prices.value.binancecoin?.usd || 300 : 300;
+                    const avaxPrice = prices.status === 'fulfilled' ? prices.value['avalanche-2']?.usd || 25 : 25;
+
+                    // Solana (estimated, as live API requires more complex setup)
+                    newGasData.SOL = {
+                        fee: '5000',
+                        unit: 'lamports',
+                        network: 'Solana',
+                        usd: '$0.005',
+                        status: 'estimated'
+                    };
+
+                    // Polygon
+                    if (polygonGas.status === 'fulfilled' && polygonGas.value?.standard) {
+                        const gasPrice = Math.round(polygonGas.value.standard.maxFee);
+                        const gasCostUSD = (gasPrice * 21000 * maticPrice) / 1e18;
+                        
+                        newGasData.MATIC = {
+                            fee: gasPrice.toString(),
+                            unit: 'gwei',
+                            network: 'Polygon',
+                            usd: `$${gasCostUSD.toFixed(3)}`,
+                            status: 'online'
+                        };
+                    } else {
+                        newGasData.MATIC = {
+                            fee: '30',
+                            unit: 'gwei',
+                            network: 'Polygon',
+                            usd: '$0.025',
+                            status: 'estimated'
+                        };
+                    }
+
+                    // BSC & Avalanche (estimated values)
+                    newGasData.BNB = {
+                        fee: '5',
+                        unit: 'gwei',
+                        network: 'BSC',
+                        usd: '$0.20',
+                        status: 'estimated'
+                    };
+
+                    newGasData.AVAX = {
+                        fee: '25',
+                        unit: 'nAVAX',
+                        network: 'Avalanche',
+                        usd: '$0.60',
+                        status: 'estimated'
+                    };
+
+                    setGasData(newGasData);
+                    setLastUpdate(new Date());
+                    
+                } catch (error) {
+                    console.error('Gas data fetch error:', error);
+                    setErrors(prev => ({ ...prev, gas: 'Failed to fetch gas data' }));
+                } finally {
+                    setLoading(prev => ({ ...prev, gas: false }));
+                }
+            };
+
+            // Fetch Live Arbitrage Data
+            const fetchArbitrageData = async () => {
+                try {
+                    setLoading(prev => ({ ...prev, arbitrage: true }));
+                    setErrors(prev => ({ ...prev, arbitrage: null }));
+
+                    // Fetch prices from multiple exchanges
+                    const responses = await Promise.allSettled([
+                        fetch(`${API_CONFIG.binance}/ticker/price?symbol=BTCUSDT`).then(r => r.json()),
+                        fetch(`${API_CONFIG.binance}/ticker/price?symbol=ETHUSDT`).then(r => r.json()),
+                        fetch(`${API_CONFIG.coingecko}/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_market_cap=false&include_24hr_vol=false&include_24hr_change=false&include_last_updated_at=false`)
+                            .then(r => r.json()),
+                    ]);
+
+                    const [binanceBTC, binanceETH, coingeckoPrices] = responses;
+
+                    const opportunities = [];
+
+                    // BTC Arbitrage
+                    if (binanceBTC.status === 'fulfilled' && coingeckoPrices.status === 'fulfilled') {
+                        const binancePrice = parseFloat(binanceBTC.value.price);
+                        const coingeckoPrice = coingeckoPrices.value.bitcoin?.usd;
+                        
+                        if (binancePrice && coingeckoPrice) {
+                            const priceDiff = Math.abs(binancePrice - coingeckoPrice);
+                            const profitPercent = (priceDiff / Math.min(binancePrice, coingeckoPrice)) * 100;
+                            
+                            if (profitPercent > 0.1) { // Only show if >0.1% difference
+                                opportunities.push({
+                                    coin: 'BTC',
+                                    buyExchange: binancePrice < coingeckoPrice ? 'Binance' : 'CoinGecko Avg',
+                                    sellExchange: binancePrice > coingeckoPrice ? 'Binance' : 'CoinGecko Avg',
+                                    buyPrice: Math.min(binancePrice, coingeckoPrice),
+                                    sellPrice: Math.max(binancePrice, coingeckoPrice),
+                                    profit: profitPercent,
+                                    profitUsd: priceDiff,
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
+                        }
+                    }
+
+                    // ETH Arbitrage
+                    if (binanceETH.status === 'fulfilled' && coingeckoPrices.status === 'fulfilled') {
+                        const binancePrice = parseFloat(binanceETH.value.price);
+                        const coingeckoPrice = coingeckoPrices.value.ethereum?.usd;
+                        
+                        if (binancePrice && coingeckoPrice) {
+                            const priceDiff = Math.abs(binancePrice - coingeckoPrice);
+                            const profitPercent = (priceDiff / Math.min(binancePrice, coingeckoPrice)) * 100;
+                            
+                            if (profitPercent > 0.1) {
+                                opportunities.push({
+                                    coin: 'ETH',
+                                    buyExchange: binancePrice < coingeckoPrice ? 'Binance' : 'CoinGecko Avg',
+                                    sellExchange: binancePrice > coingeckoPrice ? 'Binance' : 'CoinGecko Avg',
+                                    buyPrice: Math.min(binancePrice, coingeckoPrice),
+                                    sellPrice: Math.max(binancePrice, coingeckoPrice),
+                                    profit: profitPercent,
+                                    profitUsd: priceDiff,
+                                    timestamp: new Date().toISOString()
+                                });
+                            }
+                        }
+                    }
+
+                    // If no real opportunities found, show message
+                    if (opportunities.length === 0) {
+                        opportunities.push({
+                            coin: 'INFO',
+                            message: 'No significant arbitrage opportunities found at the moment.',
+                            description: 'Arbitrage opportunities are rare and usually exist for very short periods. Check back frequently or consider setting up automated alerts.',
+                            isInfo: true
+                        });
+                    }
+
+                    setArbitrageData(opportunities);
+                    
+                } catch (error) {
+                    console.error('Arbitrage data fetch error:', error);
+                    setErrors(prev => ({ ...prev, arbitrage: 'Failed to fetch arbitrage data' }));
+                } finally {
+                    setLoading(prev => ({ ...prev, arbitrage: false }));
+                }
+            };
+
+            // Initial data fetch
+            React.useEffect(() => {
+                fetchGasData();
+                fetchArbitrageData();
+
+                // Set up auto-refresh
+                const gasInterval = setInterval(fetchGasData, 30000); // 30 seconds
+                const arbitrageInterval = setInterval(fetchArbitrageData, 60000); // 60 seconds
+
+                return () => {
+                    clearInterval(gasInterval);
+                    clearInterval(arbitrageInterval);
+                };
+            }, []);
+
+            // Cookie functions
+            const acceptCookies = () => {
+                setShowCookieBanner(false);
+                // In production: localStorage.setItem('cookiesAccepted', 'true');
+            };
+
+            const rejectCookies = () => {
+                setShowCookieBanner(false);
+            };
+
+            // Tax calculation (simplified)
+            const calculateTax = () => {
+                // This would connect to a real tax calculation service
+                alert('Tax calculation feature coming soon! This will integrate with German tax regulations.');
+            };
+
+            // Render Gas Tracker
             const renderGasTracker = () => (
                 <div className="gas-tracker">
-                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
-                        <i className="fas fa-gas-pump"></i> Live Gas Fee Tracker
+                    <h2 className="section-title">
+                        <i className="fas fa-gas-pump"></i>
+                        Live Gas Fee Tracker
                     </h2>
-                    <div className="coin-grid">
-                        {Object.entries(gasData).map(([coin, data]) => (
-                            <div key={coin} className="coin-card">
-                                <div className="coin-header">
-                                    <div className="coin-icon" style={{
-                                        background: coin === 'ETH' ? '#627eea' : 
-                                                   coin === 'BTC' ? '#f7931a' :
-                                                   coin === 'SOL' ? '#14f195' :
-                                                   coin === 'MATIC' ? '#8247e5' :
-                                                   coin === 'BNB' ? '#f3ba2f' : '#e84142'
-                                    }}>
-                                        {coin}
+                    
+                    {loading.gas && Object.keys(gasData).length === 0 ? (
+                        <div className="loading-card">
+                            <div className="loading-spinner"></div>
+                            <p>Loading live gas data...</p>
+                        </div>
+                    ) : errors.gas ? (
+                        <div className="error-card">
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <p>{errors.gas}</p>
+                            <button onClick={fetchGasData} style={{marginTop: '16px', padding: '8px 16px', background: '#667eea', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer'}}>
+                                Retry
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="coin-grid">
+                                {Object.entries(gasData).map(([coin, data]) => (
+                                    <div key={coin} className="coin-card">
+                                        <div className="coin-header">
+                                            <div className="coin-icon" style={{
+                                                background: coin === 'ETH' ? 'linear-gradient(135deg, #627eea, #4c63d2)' : 
+                                                           coin === 'BTC' ? 'linear-gradient(135deg, #f7931a, #e8831a)' :
+                                                           coin === 'SOL' ? 'linear-gradient(135deg, #14f195, #00d4aa)' :
+                                                           coin === 'MATIC' ? 'linear-gradient(135deg, #8247e5, #6c37c4)' :
+                                                           coin === 'BNB' ? 'linear-gradient(135deg, #f3ba2f, #e6aa1a)' : 
+                                                           'linear-gradient(135deg, #e84142, #d83031)'
+                                            }}>
+                                                {coin}
+                                            </div>
+                                            <div>
+                                                <div className="coin-name">{data.network}</div>
+                                                <div className="coin-symbol">
+                                                    {coin} 
+                                                    <i className={`fas fa-circle status-${data.status}`} style={{marginLeft: '8px', fontSize: '0.6rem'}}></i>
+                                                    {data.status}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="fee-display">
+                                            <span className="fee-value">{data.fee} {data.unit}</span>
+                                            <span className="fee-usd">{data.usd}</span>
+                                        </div>
+                                        <div style={{fontSize: '0.9rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                            <i className="fas fa-clock"></i>
+                                            <span>Updated: {lastUpdate.toLocaleTimeString()}</span>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="coin-name">{data.network}</div>
-                                        <div style={{color: '#a0a0a0', fontSize: '0.9rem'}}>{coin}</div>
-                                    </div>
-                                </div>
-                                <div className="fee-display">
-                                    <span className="fee-value">{data.fee} {data.unit}</span>
-                                    <span className="fee-usd">{data.usd}</span>
-                                </div>
-                                <div style={{fontSize: '0.8rem', color: '#a0a0a0', marginTop: '10px'}}>
-                                    <i className="fas fa-clock"></i> Letztes Update: {new Date().toLocaleTimeString()}
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div style={{textAlign: 'center', color: '#a0a0a0', fontSize: '0.9rem'}}>
-                        <i className="fas fa-sync-alt"></i> Auto-Refresh alle 30 Sekunden
-                    </div>
+                            <div className="refresh-indicator">
+                                <i className="fas fa-sync-alt"></i>
+                                <span>Auto-refresh every 30 seconds • Live data from multiple sources</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             );
 
+            // Render Arbitrage Finder
             const renderArbitrageFinder = () => (
                 <div className="arbitrage-finder">
-                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
-                        <i className="fas fa-chart-line"></i> Crypto Arbitrage Finder
+                    <h2 className="section-title">
+                        <i className="fas fa-chart-line"></i>
+                        Live Arbitrage Finder
                     </h2>
-                    <div className="exchange-grid">
-                        {arbitrageData.map((item, index) => (
-                            <div key={index} className={`arbitrage-card ${item.profit > 1 ? 'opportunity' : ''}`}>
-                                {item.profit > 1 && (
-                                    <div className="profit-badge">
-                                        <i className="fas fa-fire"></i> HOT OPPORTUNITY
-                                    </div>
-                                )}
-                                <h3 style={{margin: '0 0 15px 0', fontSize: '1.5rem'}}>
-                                    {item.coin}
-                                </h3>
-                                <div style={{marginBottom: '15px'}}>
-                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-                                        <span><i className="fas fa-shopping-cart"></i> Kaufen: {item.buyExchange}</span>
-                                        <span style={{color: '#10b981'}}>${item.buyPrice.toLocaleString()}</span>
-                                    </div>
-                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
-                                        <span><i className="fas fa-hand-holding-usd"></i> Verkaufen: {item.sellExchange}</span>
-                                        <span style={{color: '#ef4444'}}>${item.sellPrice.toLocaleString()}</span>
-                                    </div>
-                                </div>
-                                <div style={{
-                                    padding: '15px',
-                                    background: 'rgba(16, 185, 129, 0.2)',
-                                    borderRadius: '10px',
-                                    textAlign: 'center'
-                                }}>
-                                    <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981'}}>
-                                        +{item.profit.toFixed(2)}% Profit
-                                    </div>
-                                    <div style={{fontSize: '0.9rem', color: '#a0a0a0'}}>
-                                        ≈ ${item.profitUsd} pro {item.coin}
-                                    </div>
-                                </div>
-                                <div style={{fontSize: '0.8rem', color: '#a0a0a0', marginTop: '10px', textAlign: 'center'}}>
-                                    <i className="fas fa-exclamation-triangle"></i> Inklusive Trading Fees berechnet
-                                </div>
+                    
+                    {loading.arbitrage && arbitrageData.length === 0 ? (
+                        <div className="loading-card">
+                            <div className="loading-spinner"></div>
+                            <p>Scanning live arbitrage opportunities...</p>
+                        </div>
+                    ) : errors.arbitrage ? (
+                        <div className="error-card">
+                            <i className="fas fa-exclamation-triangle"></i>
+                            <p>{errors.arbitrage}</p>
+                            <button onClick={fetchArbitrageData} style={{marginTop: '16px', padding: '8px 16px', background: '#667eea', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer'}}>
+                                Retry
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="arbitrage-grid">
+                                {arbitrageData.map((item, index) => (
+                                    item.isInfo ? (
+                                        <div key={index} className="arbitrage-card" style={{gridColumn: '1 / -1', textAlign: 'center'}}>
+                                            <h3 style={{color: '#f59e0b', marginBottom: '16px'}}>
+                                                <i className="fas fa-info-circle"></i> {item.coin}
+                                            </h3>
+                                            <p style={{color: 'var(--text-secondary)', marginBottom: '12px'}}>{item.message}</p>
+                                            <p style={{color: 'var(--text-muted)', fontSize: '0.9rem'}}>{item.description}</p>
+                                        </div>
+                                    ) : (
+                                        <div key={index} className={`arbitrage-card ${item.profit > 0.5 ? 'opportunity' : ''}`}>
+                                            {item.profit > 0.5 && (
+                                                <div className="profit-badge">
+                                                    <i className="fas fa-fire"></i> HOT OPPORTUNITY
+                                                </div>
+                                            )}
+                                            <h3 style={{fontSize: '1.8rem', fontWeight: '800', marginBottom: '20px', background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>
+                                                {item.coin}
+                                            </h3>
+                                            <div style={{marginBottom: '20px'}}>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '12px'}}>
+                                                    <span style={{display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontWeight: '600'}}>
+                                                        <i className="fas fa-shopping-cart"></i> Buy: {item.buyExchange}
+                                                    </span>
+                                                    <span style={{color: '#10b981', fontWeight: '700', fontSize: '1.1rem'}}>${item.buyPrice.toLocaleString()}</span>
+                                                </div>
+                                                <div style={{display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '12px'}}>
+                                                    <span style={{display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)', fontWeight: '600'}}>
+                                                        <i className="fas fa-hand-holding-usd"></i> Sell: {item.sellExchange}
+                                                    </span>
+                                                    <span style={{color: '#ef4444', fontWeight: '700', fontSize: '1.1rem'}}>${item.sellPrice.toLocaleString()}</span>
+                                                </div>
+                                            </div>
+                                            <div style={{
+                                                padding: '20px',
+                                                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.08) 100%)',
+                                                borderRadius: '16px',
+                                                textAlign: 'center',
+                                                border: '1px solid rgba(16, 185, 129, 0.2)',
+                                                position: 'relative',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <div style={{fontSize: '1.5rem', fontWeight: '800', color: '#10b981', marginBottom: '4px'}}>
+                                                    +{item.profit.toFixed(2)}% Profit
+                                                </div>
+                                                <div style={{color: 'var(--text-secondary)', fontSize: '1rem', fontWeight: '500'}}>
+                                                    ≈ ${item.profitUsd.toFixed(2)} per {item.coin}
+                                                </div>
+                                            </div>
+                                            <div style={{fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '16px', padding: '12px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '10px'}}>
+                                                <i className="fas fa-exclamation-triangle"></i> Always factor in trading fees and withdrawal costs
+                                            </div>
+                                        </div>
+                                    )
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                    <div style={{textAlign: 'center', color: '#a0a0a0', fontSize: '0.9rem'}}>
-                        <i className="fas fa-sync-alt"></i> Daten aktualisiert alle 60 Sekunden
-                    </div>
+                            <div className="refresh-indicator">
+                                <i className="fas fa-sync-alt"></i>
+                                <span>Auto-refresh every 60 seconds • Real-time exchange data</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             );
 
+            // Render Tax Calculator
             const renderTaxCalculator = () => (
                 <div className="tax-calculator">
                     <h2 className="section-title">
-                        <i className="fas fa-calculator"></i> Crypto Steuer Rechner (Deutschland)
+                        <i className="fas fa-calculator"></i>
+                        Crypto Steuer Rechner
                     </h2>
-                    
-                    <div className="form-section">
-                        <h3><i className="fas fa-coins"></i> Krypto Transaktionen</h3>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px'}}>
-                            <div className="form-group">
-                                <label>Kaufdatum</label>
-                                <input type="date" />
-                            </div>
-                            <div className="form-group">
-                                <label>Verkaufsdatum</label>
-                                <input type="date" />
-                            </div>
-                            <div className="form-group">
-                                <label>Cryptocurrency</label>
-                                <select>
-                                    <option>Bitcoin (BTC)</option>
-                                    <option>Ethereum (ETH)</option>
-                                    <option>Solana (SOL)</option>
-                                    <option>Andere</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Menge</label>
-                                <input type="number" placeholder="z.B. 0.5" step="0.00001" />
-                            </div>
-                            <div className="form-group">
-                                <label>Kaufpreis (€)</label>
-                                <input type="number" placeholder="z.B. 35000" />
-                            </div>
-                            <div className="form-group">
-                                <label>Verkaufspreis (€)</label>
-                                <input type="number" placeholder="z.B. 45000" />
-                            </div>
+                    <div style={{textAlign: 'center', padding: '60px 20px'}}>
+                        <div style={{fontSize: '4rem', marginBottom: '24px', opacity: '0.3'}}>
+                            <i className="fas fa-tools"></i>
                         </div>
-                    </div>
-
-                    <div className="form-section">
-                        <h3><i className="fas fa-user"></i> Persönliche Daten</h3>
-                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px'}}>
-                            <div className="form-group">
-                                <label>Steuersatz (%)</label>
-                                <select>
-                                    <option value="0">0% (unter Freibetrag)</option>
-                                    <option value="14">14% (Eingangssteuersatz)</option>
-                                    <option value="25">25% (Durchschnitt)</option>
-                                    <option value="42">42% (Spitzensteuersatz)</option>
-                                    <option value="45">45% (Höchststeuersatz)</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label>Haltefrist erfüllt? (>1 Jahr)</label>
-                                <select>
-                                    <option value="no">Nein - Steuerpflichtig</option>
-                                    <option value="yes">Ja - Steuerfrei</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={{textAlign: 'center', marginTop: '32px'}}>
-                        <button className="calculate-btn" onClick={calculateTax}>
-                            <i className="fas fa-calculator"></i> Steuer berechnen
+                        <h3 style={{fontSize: '1.8rem', marginBottom: '16px', color: 'var(--text-primary)'}}>
+                            Coming Soon
+                        </h3>
+                        <p style={{color: 'var(--text-secondary)', fontSize: '1.1rem', maxWidth: '500px', margin: '0 auto 32px', lineHeight: '1.6'}}>
+                            Wir entwickeln gerade einen vollständigen Steuerrechner für deutsche Kryptowährungsgewinne mit FIFO-Berechnung, Haltefrist-Tracking und Export-Funktionen.
+                        </p>
+                        <button 
+                            onClick={calculateTax}
+                            style={{
+                                background: 'var(--primary-gradient)',
+                                border: 'none',
+                                padding: '16px 32px',
+                                borderRadius: '12px',
+                                color: 'white',
+                                fontSize: '1rem',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = 'none';
+                            }}
+                        >
+                            <i className="fas fa-bell"></i> Benachrichtigung erhalten
                         </button>
-                    </div>
-
-                    {taxResult && (
-                        <div className="result-card">
-                            <h3 style={{color: '#4ade80', marginBottom: '24px', fontSize: '1.4rem', fontWeight: '700'}}>
-                                <i className="fas fa-check-circle"></i> Steuerberechnung
-                            </h3>
-                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '24px'}}>
-                                <div style={{textAlign: 'center', padding: '20px', background: 'rgba(74, 222, 128, 0.1)', borderRadius: '16px', border: '1px solid rgba(74, 222, 128, 0.2)'}}>
-                                    <div style={{color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', marginBottom: '8px'}}>Gesamtgewinn</div>
-                                    <div style={{fontSize: '1.8rem', fontWeight: '800', color: '#4ade80'}}>
-                                        €{taxResult.totalGains.toLocaleString()}
-                                    </div>
-                                </div>
-                                <div style={{textAlign: 'center', padding: '20px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '16px', border: '1px solid rgba(245, 158, 11, 0.2)'}}>
-                                    <div style={{color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', marginBottom: '8px'}}>Steuerpflichtiger Gewinn</div>
-                                    <div style={{fontSize: '1.8rem', fontWeight: '800', color: '#f59e0b'}}>
-                                        €{taxResult.taxableGains.toLocaleString()}
-                                    </div>
-                                </div>
-                                <div style={{textAlign: 'center', padding: '20px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '16px', border: '1px solid rgba(239, 68, 68, 0.2)'}}>
-                                    <div style={{color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.9rem', marginBottom: '8px'}}>Zu zahlende Steuer</div>
-                                    <div style={{fontSize: '1.8rem', fontWeight: '800', color: '#ef4444'}}>
-                                        €{taxResult.tax.toLocaleString()}
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{
-                                marginTop: '24px',
-                                padding: '20px',
-                                background: 'rgba(59, 130, 246, 0.15)',
-                                borderRadius: '16px',
-                                color: '#60a5fa',
-                                border: '1px solid rgba(59, 130, 246, 0.2)'
-                            }}>
-                                <i className="fas fa-lightbulb"></i> <strong>Tipp:</strong> {taxResult.recommendation}
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="warning-note" style={{marginTop: '32px'}}>
-                        <i className="fas fa-exclamation-triangle"></i> Dies ist keine Steuerberatung. Konsultieren Sie einen Steuerberater.
                     </div>
                 </div>
             );
@@ -557,7 +1066,7 @@
                 <div className="container">
                     <div className="header">
                         <h1>Crypto Tools Suite</h1>
-                        <p>Gas Tracker • Arbitrage Finder • Steuer Rechner • Crypto News</p>
+                        <p>Live Gas Tracker • Arbitrage Finder • Steuer Rechner</p>
                     </div>
 
                     <div className="navigation">
@@ -592,7 +1101,13 @@
 
                     <div className="social-links">
                         <a href="https://twitter.com/cryptosnapnews" target="_blank" rel="noopener noreferrer">
-                            <i className="fab fa-twitter"></i> @cryptosnapnews
+                            <i className="fab fa-twitter"></i> Twitter
+                        </a>
+                        <a href="https://www.tiktok.com/@cryptosnapnews" target="_blank" rel="noopener noreferrer">
+                            <i className="fab fa-tiktok"></i> TikTok
+                        </a>
+                        <a href="https://youtube.com/@cryptosnapnews" target="_blank" rel="noopener noreferrer">
+                            <i className="fab fa-youtube"></i> YouTube
                         </a>
                         <a href="https://github.com" target="_blank" rel="noopener noreferrer">
                             <i className="fab fa-github"></i> GitHub
@@ -601,6 +1116,26 @@
                             <i className="fas fa-envelope"></i> Contact
                         </a>
                     </div>
+                    
+                    {/* Cookie Banner */}
+                    {showCookieBanner && (
+                        <div className="cookie-banner">
+                            <div className="cookie-content">
+                                <div className="cookie-text">
+                                    <strong>🍪 Cookie-Einstellungen</strong><br/>
+                                    Diese Website verwendet Cookies für Analytics und bessere Nutzererfahrung. Ihre Daten werden nicht an Dritte weitergegeben.
+                                </div>
+                                <div className="cookie-buttons">
+                                    <button className="cookie-btn accept" onClick={acceptCookies}>
+                                        <i className="fas fa-check"></i> Akzeptieren
+                                    </button>
+                                    <button className="cookie-btn reject" onClick={rejectCookies}>
+                                        <i className="fas fa-times"></i> Ablehnen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
