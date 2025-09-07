@@ -746,6 +746,15 @@
             const [twitterPosts, setTwitterPosts] = useState([]);
             const [transactions, setTransactions] = useState([]);
             const [taxResults, setTaxResults] = useState(null);
+            const [formData, setFormData] = useState({
+                coin: 'BTC',
+                amount: '',
+                buyDate: '',
+                buyPrice: '',
+                sellDate: '',
+                sellPrice: '',
+                taxRate: '25'
+            });
             const [loading, setLoading] = useState({
                 gas: true,
                 arbitrage: true,
@@ -763,7 +772,7 @@
 
                     // Fetch real gas data from multiple APIs
                     const responses = await Promise.allSettled([
-                        // Ethereum gas from Etherscan (fallback to estimation if no API key)
+                        // Ethereum gas from Etherscan
                         fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=YourApiKeyToken')
                             .then(res => res.json())
                             .catch(() => ({ result: { SafeGasPrice: Math.floor(Math.random() * 30 + 15) } })),
@@ -783,15 +792,10 @@
                                 'matic-network': { usd: 0.8 },
                                 binancecoin: { usd: 350 },
                                 'avalanche-2': { usd: 35 }
-                            })),
-                        
-                        // Polygon gas station
-                        fetch('https://gasstation-mainnet.matic.network/v2')
-                            .then(res => res.json())
-                            .catch(() => ({ standard: { maxFee: 30 } }))
+                            }))
                     ]);
 
-                    const [ethGas, btcFees, prices, polygonGas] = responses.map(r => r.status === 'fulfilled' ? r.value : null);
+                    const [ethGas, btcFees, prices] = responses.map(r => r.status === 'fulfilled' ? r.value : null);
 
                     const newGasData = {};
 
@@ -827,12 +831,7 @@
                         };
                     }
 
-                    // Process other networks
-                    const solPrice = prices?.solana?.usd || 150;
-                    const maticPrice = prices?.['matic-network']?.usd || 0.8;
-                    const bnbPrice = prices?.binancecoin?.usd || 350;
-                    const avaxPrice = prices?.['avalanche-2']?.usd || 35;
-
+                    // Add other networks with estimated values
                     newGasData.SOL = {
                         fee: '5000',
                         unit: 'lamports',
@@ -841,18 +840,13 @@
                         status: 'estimated'
                     };
 
-                    if (polygonGas?.standard?.maxFee) {
-                        const gasPrice = Math.round(polygonGas.standard.maxFee);
-                        const gasCostUSD = (gasPrice * 21000 * maticPrice) / 1e18;
-                        
-                        newGasData.MATIC = {
-                            fee: gasPrice.toString(),
-                            unit: 'gwei',
-                            network: 'Polygon',
-                            usd: `$${gasCostUSD.toFixed(3)}`,
-                            status: 'live'
-                        };
-                    }
+                    newGasData.MATIC = {
+                        fee: '30',
+                        unit: 'gwei',
+                        network: 'Polygon',
+                        usd: '$0.025',
+                        status: 'estimated'
+                    };
 
                     newGasData.BNB = {
                         fee: '5',
@@ -890,17 +884,12 @@
                         fetch('https://api.binance.com/api/v3/ticker/price?symbols=["BTCUSDT","ETHUSDT","SOLUSDT"]')
                             .then(res => res.json()),
                         
-                        // CoinGecko prices (as comparison)
+                        // CoinGecko prices
                         fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd')
-                            .then(res => res.json()),
-                        
-                        // Kraken prices
-                        fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD,SOLUSD')
                             .then(res => res.json())
-                            .catch(() => null)
                     ]);
 
-                    const [binancePrices, coingeckoPrices, krakenPrices] = responses.map(r => r.status === 'fulfilled' ? r.value : null);
+                    const [binancePrices, coingeckoPrices] = responses.map(r => r.status === 'fulfilled' ? r.value : null);
 
                     const opportunities = [];
 
@@ -952,7 +941,7 @@
                         }
                     }
 
-                    // If no opportunities found, show informational message
+                    // If no opportunities found
                     if (opportunities.length === 0) {
                         opportunities.push({
                             isInfo: true,
@@ -1030,14 +1019,39 @@
             };
 
             // Tax Calculator Functions
-            const addTransaction = (transaction) => {
-                const newTransaction = {
-                    id: Date.now(),
-                    ...transaction,
-                    buyDate: new Date(transaction.buyDate),
-                    sellDate: new Date(transaction.sellDate)
-                };
-                setTransactions(prev => [...prev, newTransaction]);
+            const handleInputChange = (e) => {
+                setFormData(prev => ({
+                    ...prev,
+                    [e.target.name]: e.target.value
+                }));
+            };
+
+            const addTransaction = () => {
+                if (formData.amount && formData.buyDate && formData.buyPrice && formData.sellDate && formData.sellPrice) {
+                    const newTransaction = {
+                        id: Date.now(),
+                        coin: formData.coin,
+                        amount: parseFloat(formData.amount),
+                        buyDate: formData.buyDate,
+                        buyPrice: parseFloat(formData.buyPrice),
+                        sellDate: formData.sellDate,
+                        sellPrice: parseFloat(formData.sellPrice),
+                        taxRate: parseFloat(formData.taxRate)
+                    };
+                    
+                    setTransactions(prev => [...prev, newTransaction]);
+                    
+                    // Reset form
+                    setFormData({
+                        coin: 'BTC',
+                        amount: '',
+                        buyDate: '',
+                        buyPrice: '',
+                        sellDate: '',
+                        sellPrice: '',
+                        taxRate: '25'
+                    });
+                }
             };
 
             const deleteTransaction = (id) => {
@@ -1056,11 +1070,12 @@
                     totalProfit += profit;
 
                     // Check holding period (1 year = tax-free in Germany)
-                    const holdingPeriod = tx.sellDate - tx.buyDate;
+                    const buyDate = new Date(tx.buyDate);
+                    const sellDate = new Date(tx.sellDate);
+                    const holdingPeriod = sellDate - buyDate;
                     const oneYear = 365 * 24 * 60 * 60 * 1000;
                     
                     if (holdingPeriod < oneYear && profit > 0) {
-                        // Subject to tax if held less than 1 year and profitable
                         totalTaxableProfit += profit;
                         totalTax += profit * (tx.taxRate / 100);
                     }
@@ -1242,229 +1257,187 @@
                 </div>
             );
 
-            const renderTaxCalculator = () => {
-                const [formData, setFormData] = useState({
-                    coin: 'BTC',
-                    amount: '',
-                    buyDate: '',
-                    buyPrice: '',
-                    sellDate: '',
-                    sellPrice: '',
-                    taxRate: '25'
-                });
+            const renderTaxCalculator = () => (
+                <div>
+                    <h2 className="section-title">
+                        <i className="fas fa-calculator"></i>
+                        Crypto Steuer Rechner (Deutschland)
+                    </h2>
+                    
+                    <div className="tax-form">
+                        <div className="form-section">
+                            <h3>
+                                <i className="fas fa-coins"></i>
+                                Neue Transaktion hinzufügen
+                            </h3>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Kryptowährung</label>
+                                    <select name="coin" value={formData.coin} onChange={handleInputChange}>
+                                        <option value="BTC">Bitcoin (BTC)</option>
+                                        <option value="ETH">Ethereum (ETH)</option>
+                                        <option value="SOL">Solana (SOL)</option>
+                                        <option value="ADA">Cardano (ADA)</option>
+                                        <option value="DOT">Polkadot (DOT)</option>
+                                        <option value="MATIC">Polygon (MATIC)</option>
+                                        <option value="AVAX">Avalanche (AVAX)</option>
+                                        <option value="OTHER">Andere</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Menge</label>
+                                    <input 
+                                        type="number" 
+                                        name="amount"
+                                        value={formData.amount}
+                                        onChange={handleInputChange}
+                                        placeholder="z.B. 0.5" 
+                                        step="0.00000001" 
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Kaufdatum</label>
+                                    <input 
+                                        type="date" 
+                                        name="buyDate"
+                                        value={formData.buyDate}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Kaufpreis (€)</label>
+                                    <input 
+                                        type="number" 
+                                        name="buyPrice"
+                                        value={formData.buyPrice}
+                                        onChange={handleInputChange}
+                                        placeholder="z.B. 35000" 
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Verkaufsdatum</label>
+                                    <input 
+                                        type="date" 
+                                        name="sellDate"
+                                        value={formData.sellDate}
+                                        onChange={handleInputChange}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Verkaufspreis (€)</label>
+                                    <input 
+                                        type="number" 
+                                        name="sellPrice"
+                                        value={formData.sellPrice}
+                                        onChange={handleInputChange}
+                                        placeholder="z.B. 45000" 
+                                    />
+                                </div>
+                            </div>
+                            <div className="form-grid" style={{marginTop: '20px'}}>
+                                <div className="form-group">
+                                    <label>Steuersatz (%)</label>
+                                    <select name="taxRate" value={formData.taxRate} onChange={handleInputChange}>
+                                        <option value="0">0% (unter Freibetrag)</option>
+                                        <option value="14">14% (Eingangssteuersatz)</option>
+                                        <option value="25">25% (Durchschnitt)</option>
+                                        <option value="30">30% (gehobener Mittelstand)</option>
+                                        <option value="42">42% (Spitzensteuersatz)</option>
+                                        <option value="45">45% (Höchststeuersatz)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button className="calculate-btn" onClick={addTransaction}>
+                                <i className="fas fa-plus"></i> Transaktion hinzufügen
+                            </button>
+                        </div>
 
-                const handleInputChange = (e) => {
-                    setFormData(prev => ({
-                        ...prev,
-                        [e.target.name]: e.target.value
-                    }));
-                };
-
-                const handleAddTransaction = () => {
-                    if (formData.amount && formData.buyDate && formData.buyPrice && formData.sellDate && formData.sellPrice) {
-                        addTransaction({
-                            coin: formData.coin,
-                            amount: parseFloat(formData.amount),
-                            buyDate: formData.buyDate,
-                            buyPrice: parseFloat(formData.buyPrice),
-                            sellDate: formData.sellDate,
-                            sellPrice: parseFloat(formData.sellPrice),
-                            taxRate: parseFloat(formData.taxRate)
-                        });
-                        
-                        // Reset form
-                        setFormData({
-                            coin: 'BTC',
-                            amount: '',
-                            buyDate: '',
-                            buyPrice: '',
-                            sellDate: '',
-                            sellPrice: '',
-                            taxRate: '25'
-                        });
-                    }
-                };
-
-                return (
-                    <div>
-                        <h2 className="section-title">
-                            <i className="fas fa-calculator"></i>
-                            Crypto Steuer Rechner (Deutschland)
-                        </h2>
-                        
-                        <div className="tax-form">
+                        {transactions.length > 0 && (
                             <div className="form-section">
                                 <h3>
-                                    <i className="fas fa-coins"></i>
-                                    Neue Transaktion hinzufügen
+                                    <i className="fas fa-list"></i>
+                                    Transaktionen ({transactions.length})
                                 </h3>
-                                <div className="form-grid">
-                                    <div className="form-group">
-                                        <label>Kryptowährung</label>
-                                        <select name="coin" value={formData.coin} onChange={handleInputChange}>
-                                            <option value="BTC">Bitcoin (BTC)</option>
-                                            <option value="ETH">Ethereum (ETH)</option>
-                                            <option value="SOL">Solana (SOL)</option>
-                                            <option value="ADA">Cardano (ADA)</option>
-                                            <option value="DOT">Polkadot (DOT)</option>
-                                            <option value="MATIC">Polygon (MATIC)</option>
-                                            <option value="AVAX">Avalanche (AVAX)</option>
-                                            <option value="OTHER">Andere</option>
-                                        </select>
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Menge</label>
-                                        <input 
-                                            type="number" 
-                                            name="amount"
-                                            value={formData.amount}
-                                            onChange={handleInputChange}
-                                            placeholder="z.B. 0.5" 
-                                            step="0.00000001" 
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Kaufdatum</label>
-                                        <input 
-                                            type="date" 
-                                            name="buyDate"
-                                            value={formData.buyDate}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Kaufpreis (€)</label>
-                                        <input 
-                                            type="number" 
-                                            name="buyPrice"
-                                            value={formData.buyPrice}
-                                            onChange={handleInputChange}
-                                            placeholder="z.B. 35000" 
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Verkaufsdatum</label>
-                                        <input 
-                                            type="date" 
-                                            name="sellDate"
-                                            value={formData.sellDate}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    <div className="form-group">
-                                        <label>Verkaufspreis (€)</label>
-                                        <input 
-                                            type="number" 
-                                            name="sellPrice"
-                                            value={formData.sellPrice}
-                                            onChange={handleInputChange}
-                                            placeholder="z.B. 45000" 
-                                        />
-                                    </div>
+                                <div className="transactions-list">
+                                    {transactions.map(tx => {
+                                        const profit = (tx.sellPrice - tx.buyPrice) * tx.amount;
+                                        const buyDate = new Date(tx.buyDate);
+                                        const sellDate = new Date(tx.sellDate);
+                                        const holdingPeriod = sellDate - buyDate;
+                                        const days = Math.floor(holdingPeriod / (1000 * 60 * 60 * 24));
+                                        
+                                        return (
+                                            <div key={tx.id} className="transaction-item">
+                                                <div>
+                                                    <strong>{tx.amount} {tx.coin}</strong>
+                                                    <div style={{fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.6)'}}>
+                                                        {buyDate.toLocaleDateString()} → {sellDate.toLocaleDateString()} ({days} Tage)
+                                                    </div>
+                                                    <div style={{fontSize: '0.9rem', color: profit > 0 ? '#10b981' : '#ef4444'}}>
+                                                        Gewinn: €{profit.toFixed(2)} {days >= 365 ? '(steuerfrei)' : '(steuerpflichtig)'}
+                                                    </div>
+                                                </div>
+                                                <button className="delete-btn" onClick={() => deleteTransaction(tx.id)}>
+                                                    <i className="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="form-grid" style={{marginTop: '20px'}}>
-                                    <div className="form-group">
-                                        <label>Steuersatz (%)</label>
-                                        <select name="taxRate" value={formData.taxRate} onChange={handleInputChange}>
-                                            <option value="0">0% (unter Freibetrag)</option>
-                                            <option value="14">14% (Eingangssteuersatz)</option>
-                                            <option value="25">25% (Durchschnitt)</option>
-                                            <option value="30">30% (gehobener Mittelstand)</option>
-                                            <option value="42">42% (Spitzensteuersatz)</option>
-                                            <option value="45">45% (Höchststeuersatz)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <button className="calculate-btn" onClick={handleAddTransaction}>
-                                    <i className="fas fa-plus"></i> Transaktion hinzufügen
+                                <button className="calculate-btn" onClick={calculateTax}>
+                                    <i className="fas fa-calculator"></i> Steuer berechnen
                                 </button>
                             </div>
+                        )}
 
-                            {transactions.length > 0 && (
-                                <div className="form-section">
-                                    <h3>
-                                        <i className="fas fa-list"></i>
-                                        Transaktionen ({transactions.length})
-                                    </h3>
-                                    <div className="transactions-list">
-                                        {transactions.map(tx => {
-                                            const profit = (tx.sellPrice - tx.buyPrice) * tx.amount;
-                                            const holdingPeriod = new Date(tx.sellDate) - new Date(tx.buyDate);
-                                            const days = Math.floor(holdingPeriod / (1000 * 60 * 60 * 24));
-                                            
-                                            return (
-                                                <div key={tx.id} className="transaction-item">
-                                                    <div>
-                                                        <strong>{tx.amount} {tx.coin}</strong>
-                                                        <div style={{fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.6)'}}>
-                                                            {new Date(tx.buyDate).toLocaleDateString()} → {new Date(tx.sellDate).toLocaleDateString()} ({days} Tage)
-                                                        </div>
-                                                        <div style={{fontSize: '0.9rem', color: profit > 0 ? '#10b981' : '#ef4444'}}>
-                                                            Gewinn: €{profit.toFixed(2)} {days >= 365 ? '(steuerfrei)' : '(steuerpflichtig)'}
-                                                        </div>
-                                                    </div>
-                                                    <button className="delete-btn" onClick={() => deleteTransaction(tx.id)}>
-                                                        <i className="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })}
+                        {taxResults && (
+                            <div className="result-card">
+                                <h3 style={{color: '#4ade80', marginBottom: '24px', fontSize: '1.4rem', fontWeight: '700', textAlign: 'center'}}>
+                                    <i className="fas fa-check-circle"></i> Steuerberechnung
+                                </h3>
+                                <div className="result-grid">
+                                    <div className="result-item profit">
+                                        <div className="result-label">Gesamtgewinn</div>
+                                        <div className="result-value profit">€{taxResults.totalProfit.toFixed(2)}</div>
                                     </div>
-                                    <button className="calculate-btn" onClick={calculateTax}>
-                                        <i className="fas fa-calculator"></i> Steuer berechnen
-                                    </button>
-                                </div>
-                            )}
-
-                            {taxResults && (
-                                <div className="result-card">
-                                    <h3 style={{color: '#4ade80', marginBottom: '24px', fontSize: '1.4rem', fontWeight: '700', textAlign: 'center'}}>
-                                        <i className="fas fa-check-circle"></i> Steuerberechnung
-                                    </h3>
-                                    <div className="result-grid">
-                                        <div className="result-item profit">
-                                            <div className="result-label">Gesamtgewinn</div>
-                                            <div className="result-value profit">€{taxResults.totalProfit.toFixed(2)}</div>
-                                        </div>
-                                        <div className="result-item tax">
-                                            <div className="result-label">Zu zahlende Steuer</div>
-                                            <div className="result-value tax">€{taxResults.totalTax.toFixed(2)}</div>
-                                        </div>
-                                        <div className="result-item net">
-                                            <div className="result-label">Nettogewinn</div>
-                                            <div className="result-value net">€{taxResults.netProfit.toFixed(2)}</div>
-                                        </div>
+                                    <div className="result-item tax">
+                                        <div className="result-label">Zu zahlende Steuer</div>
+                                        <div className="result-value tax">€{taxResults.totalTax.toFixed(2)}</div>
                                     </div>
-                                    
-                                    <div style={{
-                                        marginTop: '24px',
-                                        padding: '20px',
-                                        background: 'rgba(59, 130, 246, 0.15)',
-                                        borderRadius: '16px',
-                                        border: '1px solid rgba(59, 130, 246, 0.2)'
-                                    }}>
-                                        <h4 style={{color: '#3b82f6', marginBottom: '12px'}}>
-                                            <i className="fas fa-info-circle"></i> Wichtige Hinweise
-                                        </h4>
-                                        <ul style={{color: 'rgba(255, 255, 255, 0.8)', lineHeight: '1.6', paddingLeft: '20px'}}>
-                                            <li>Haltefrist > 1 Jahr = steuerfrei (§ 23 EStG)</li>
-                                            <li>Freibetrag: €600 pro Jahr für Spekulationsgewinne</li>
-                                            <li>FIFO-Methode (First In, First Out) wird angewendet</li>
-                                            <li>Diese Berechnung ersetzt keine professionelle Steuerberatung</li>
-                                        </ul>
+                                    <div className="result-item net">
+                                        <div className="result-label">Nettogewinn</div>
+                                        <div className="result-value net">€{taxResults.netProfit.toFixed(2)}</div>
                                     </div>
                                 </div>
-                            )}
-
-                            <div style={{fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', marginTop: '32px', padding: '16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px'}}>
-                                <i className="fas fa-exclamation-triangle"></i> 
-                                <strong> Haftungsausschluss:</strong> Diese Berechnung stellt keine Steuerberatung dar. 
-                                Konsultieren Sie einen Steuerberater für individuelle Beratung.
+                                
+                                <div style={{
+                                    marginTop: '24px',
+                                    padding: '20px',
+                                    background: 'rgba(59, 130, 246, 0.15)',
+                                    borderRadius: '16px',
+                                    border: '1px solid rgba(59, 130, 246, 0.2)'
+                                }}>
+                                    <h4 style={{color: '#3b82f6', marginBottom: '12px'}}>
+                                        <i className="fas fa-info-circle"></i> Wichtige Hinweise
+                                    </h4>
+                                    <ul style={{color: 'rgba(255, 255, 255, 0.8)', lineHeight: '1.6', paddingLeft: '20px'}}>
+                                        <li>Haltefrist > 1 Jahr = steuerfrei (§ 23 EStG)</li>
+                                        <li>Freibetrag: €600 pro Jahr für Spekulationsgewinne</li>
+                                        <li>FIFO-Methode (First In, First Out) wird angewendet</li>
+                                        <li>Diese Berechnung ersetzt keine professionelle Steuerberatung</li>
+                                    </ul>
+                                </div>
                             </div>
+                        )}
+
+                        <div style={{fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.4)', textAlign: 'center', marginTop: '32px', padding: '16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px'}}>
+                            <i className="fas fa-exclamation-triangle"></i> 
+                            <strong> Haftungsausschluss:</strong> Diese Berechnung stellt keine Steuerberatung dar. 
+                            Konsultieren Sie einen Steuerberater für individuelle Beratung.
                         </div>
                     </div>
-                );
-            };
+                </div>
+            );
 
             const renderNewsSection = () => (
                 <div>
