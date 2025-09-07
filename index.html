@@ -3,718 +3,608 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gas Tracker - Live Crypto Fees für 9 Blockchains</title>
-    <meta name="description" content="Echtzeitvergleich der Transaktionsgebühren für Ethereum, Bitcoin, Solana, Polygon, BNB Chain, Avalanche, Arbitrum, Optimism und TRON.">
-    <meta name="keywords" content="Gas Fees, Ethereum, Bitcoin, Solana, Polygon, BNB, Avalanche, Arbitrum, Optimism, TRON, Crypto">
-    
-    <!-- Google tag (gtag.js) - wird nur geladen wenn Cookie akzeptiert -->
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        
-        // Analytics nur laden wenn Cookies akzeptiert wurden
-        function loadGoogleAnalytics() {
-            var script = document.createElement('script');
-            script.async = true;
-            script.src = 'https://www.googletagmanager.com/gtag/js?id=G-N4YD83MD1X';
-            document.head.appendChild(script);
-            
-            script.onload = function() {
-                gtag('js', new Date());
-                gtag('config', 'G-N4YD83MD1X', {
-                    'anonymize_ip': true,
-                    'cookie_flags': 'SameSite=None;Secure'
-                });
-            };
-        }
-        
-        // Cookie-Status prüfen
-        function checkCookieConsent() {
-            return localStorage.getItem('cookieConsent') === 'accepted';
-        }
-        
-        // Analytics laden wenn bereits zugestimmt
-        if (checkCookieConsent()) {
-            loadGoogleAnalytics();
-        }
-    </script>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <title>Crypto Tools Suite - Gas Tracker, Arbitrage & Tax Calculator</title>
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
+    <script src="https://unpkg.com/recharts@2.5.0/dist/index.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
-        .hover\:scale-105:hover { transform: scale(1.05); }
-        .transition-all { transition: all 0.3s ease; }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
         
-        /* Cookie Banner Styles */
-        .cookie-banner {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(139, 92, 246, 0.3);
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 20px;
-            z-index: 1000;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
         }
         
-        .cookie-banner.show {
-            transform: translateY(0);
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
         }
         
-        .cookie-banner-hidden {
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            color: #a0a0a0;
+            margin-top: 10px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 5px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-button {
+            flex: 1;
+            padding: 15px 20px;
+            margin: 5px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: #a0a0a0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .nav-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .tool-content {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .gas-tracker .coin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .coin-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .coin-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+        
+        .coin-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .coin-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .coin-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        
+        .fee-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .fee-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+        
+        .fee-usd {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+        }
+        
+        .arbitrage-finder .exchange-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .arbitrage-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .opportunity {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 1px solid #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        
+        .profit-badge {
+            background: #10b981;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            float: right;
+        }
+        
+        .tax-calculator .form-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #e0e0e0;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .form-group input::placeholder {
+            color: #a0a0a0;
+        }
+        
+        .calculate-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .social-links {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .social-links a {
+            color: #a0a0a0;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .navigation {
+                flex-direction: column;
+            }
+            
+            .nav-button {
+                margin: 2px 0;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .tool-content {
+                padding: 20px;
+            }
+        }
+        
+        .hidden {
             display: none;
         }
     </style>
 </head>
 <body>
-    <!-- Cookie Banner -->
-    <div id="cookieBanner" class="cookie-banner">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div class="text-white text-sm">
-                <p class="mb-2"><strong>🍪 Cookie-Hinweis</strong></p>
-                <p>Diese Website verwendet Google Analytics, um die Nutzung zu analysieren und die Website zu verbessern. 
-                Durch Klick auf "Akzeptieren" stimmen Sie der Verwendung von Cookies zu.</p>
-            </div>
-            <div class="flex gap-3 flex-shrink-0">
-                <button 
-                    onclick="acceptCookies()" 
-                    class="bg-gradient-to-r from-purple-500 to-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:from-purple-600 hover:to-blue-700 transition-all duration-300"
-                >
-                    Akzeptieren
-                </button>
-                <button 
-                    onclick="declineCookies()" 
-                    class="bg-slate-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-slate-700 transition-colors duration-300"
-                >
-                    Ablehnen
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div id="root"></div>
 
-    <script>
-        // Cookie Banner Functions
-        function showCookieBanner() {
-            const banner = document.getElementById('cookieBanner');
-            if (banner && !checkCookieConsent() && localStorage.getItem('cookieConsent') !== 'declined') {
-                banner.classList.add('show');
-            }
-        }
-        
-        function hideCookieBanner() {
-            const banner = document.getElementById('cookieBanner');
-            if (banner) {
-                banner.classList.remove('show');
-                setTimeout(() => {
-                    banner.classList.add('cookie-banner-hidden');
-                }, 300);
-            }
-        }
-        
-        function acceptCookies() {
-            localStorage.setItem('cookieConsent', 'accepted');
-            loadGoogleAnalytics();
-            hideCookieBanner();
-            
-            // Event tracking für Cookie-Akzeptanz
-            setTimeout(() => {
-                if (typeof gtag !== 'undefined') {
-                    gtag('event', 'cookie_consent', {
-                        'event_category': 'consent',
-                        'event_label': 'accepted'
-                    });
-                }
-            }, 1000);
-        }
-        
-        function declineCookies() {
-            localStorage.setItem('cookieConsent', 'declined');
-            hideCookieBanner();
-        }
-        
-        // Cookie Banner beim Laden anzeigen
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(showCookieBanner, 2000); // 2 Sekunden Verzögerung
-        });
-    </script>
-
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const CryptoToolsSuite = () => {
+            const [activeTab, setActiveTab] = React.useState('gas-tracker');
+            const [gasData, setGasData] = React.useState({});
+            const [arbitrageData, setArbitrageData] = React.useState([]);
+            const [taxResult, setTaxResult] = React.useState(null);
 
-        // Icons
-        const Fuel = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" x2="15" y1="22" y2="22"></line>
-                <path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"></path>
-                <path d="M14 13h2a2 2 0 0 1 2 2v2a1 1 0 0 0 1 1h2"></path>
-            </svg>
-        );
+            // Mock data for demonstration
+            React.useEffect(() => {
+                // Initialize mock data
+                setGasData({
+                    ETH: { fee: '25', usd: '$2.45', unit: 'gwei', network: 'Ethereum' },
+                    BTC: { fee: '15', usd: '$8.50', unit: 'sat/vB', network: 'Bitcoin' },
+                    SOL: { fee: '5000', usd: '$0.01', unit: 'lamports', network: 'Solana' },
+                    MATIC: { fee: '35', usd: '$0.03', unit: 'gwei', network: 'Polygon' },
+                    BNB: { fee: '5', usd: '$0.25', unit: 'gwei', network: 'BSC' },
+                    AVAX: { fee: '25', usd: '$0.65', unit: 'nAVAX', network: 'Avalanche' }
+                });
 
-        const TrendingUp = () => (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polyline points="22,7 13.5,15.5 8.5,10.5 2,17"></polyline>
-                <polyline points="16,7 22,7 22,13"></polyline>
-            </svg>
-        );
-
-        const ArrowUp = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" x2="12" y1="19" y2="5"></line>
-                <polyline points="5,12 12,5 19,12"></polyline>
-            </svg>
-        );
-
-        const ArrowDown = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="12" x2="12" y1="5" y2="19"></line>
-                <polyline points="19,12 12,19 5,12"></polyline>
-            </svg>
-        );
-
-        const Minus = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="5" x2="19" y1="12" y2="12"></line>
-            </svg>
-        );
-
-        const Clock = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12,6 12,12 16,14"></polyline>
-            </svg>
-        );
-
-        const Zap = () => (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon>
-            </svg>
-        );
-
-        const MultiChainFeeTracker = () => {
-            // Alle 9 Blockchains
-            const coins = [
-                { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', icon: '⟠', color: 'from-blue-500 to-purple-600' },
-                { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', icon: '₿', color: 'from-orange-400 to-yellow-600' },
-                { id: 'solana', name: 'Solana', symbol: 'SOL', icon: '◎', color: 'from-purple-400 to-pink-600' },
-                { id: 'polygon', name: 'Polygon', symbol: 'MATIC', icon: '⬡', color: 'from-purple-500 to-indigo-600' },
-                { id: 'bnb', name: 'BNB Chain', symbol: 'BNB', icon: '🟡', color: 'from-yellow-400 to-orange-500' },
-                { id: 'avalanche', name: 'Avalanche', symbol: 'AVAX', icon: '🔺', color: 'from-red-400 to-red-600' },
-                { id: 'arbitrum', name: 'Arbitrum', symbol: 'ARB', icon: '🔵', color: 'from-blue-400 to-cyan-500' },
-                { id: 'optimism', name: 'Optimism', symbol: 'OP', icon: '🔴', color: 'from-red-500 to-pink-500' },
-                { id: 'tron', name: 'TRON', symbol: 'TRX', icon: '⚡', color: 'from-red-600 to-orange-600' }
-            ];
-
-            const [selectedCoin, setSelectedCoin] = useState('ethereum');
-            const [loading, setLoading] = useState(true);
-            const [data, setData] = useState({
-                gasData: { slow: 15, standard: 25, fast: 35, instant: 50, unit: 'gwei', timestamp: new Date().toISOString() },
-                prices: { ethereum: 3400, bitcoin: 67000, solana: 130, polygon: 0.85, bnb: 310, avalanche: 35, arbitrum: 1.2, optimism: 2.1, tron: 0.11 },
-                trends: { ethereum: 2.5, bitcoin: -1.2, solana: 5.8, polygon: 3.2, bnb: -0.8, avalanche: 4.1, arbitrum: 6.3, optimism: 2.7, tron: 1.5 },
-                isLive: false
-            });
-
-            const defaultGasData = {
-                ethereum: { slow: 15, standard: 25, fast: 35, instant: 50, unit: 'gwei' },
-                bitcoin: { slow: 5, standard: 10, fast: 20, instant: 30, unit: 'sat/vB' },
-                solana: { slow: 0.000005, standard: 0.000005, fast: 0.00001, instant: 0.000015, unit: 'SOL' },
-                polygon: { slow: 1, standard: 2, fast: 5, instant: 10, unit: 'gwei' },
-                bnb: { slow: 3, standard: 5, fast: 8, instant: 12, unit: 'gwei' },
-                avalanche: { slow: 20, standard: 25, fast: 30, instant: 40, unit: 'nAVAX' },
-                arbitrum: { slow: 0.1, standard: 0.2, fast: 0.5, instant: 1, unit: 'gwei' },
-                optimism: { slow: 0.001, standard: 0.002, fast: 0.005, instant: 0.01, unit: 'ETH' },
-                tron: { slow: 0, standard: 0, fast: 1, instant: 2, unit: 'TRX' }
-            };
-
-            // Analytics Event Tracking
-            const trackEvent = (eventName, coinId, speedType = null) => {
-                if (typeof gtag !== 'undefined' && checkCookieConsent()) {
-                    gtag('event', eventName, {
-                        'event_category': 'user_interaction',
-                        'coin_id': coinId,
-                        'speed_type': speedType,
-                        'custom_map': {'dimension1': coinId}
-                    });
-                }
-            };
-
-            // Daten laden
-            const fetchData = async () => {
-                try {
-                    let gasData = { ...defaultGasData[selectedCoin] };
-                    
-                    // Ethereum Gas-Daten
-                    if (selectedCoin === 'ethereum') {
-                        try {
-                            const gasResponse = await fetch('https://api.etherscan.io/api?module=gastracker&action=gasoracle');
-                            const gasResult = await gasResponse.json();
-                            if (gasResult.status === '1' && gasResult.result) {
-                                gasData = {
-                                    slow: parseInt(gasResult.result.SafeGasPrice) || 15,
-                                    standard: parseInt(gasResult.result.ProposeGasPrice) || 25,
-                                    fast: parseInt(gasResult.result.FastGasPrice) || 35,
-                                    instant: Math.floor(parseInt(gasResult.result.FastGasPrice) * 1.5) || 50,
-                                    unit: 'gwei'
-                                };
-                            }
-                        } catch (e) { console.log('Ethereum API failed'); }
+                setArbitrageData([
+                    {
+                        coin: 'BTC',
+                        buyExchange: 'Binance',
+                        sellExchange: 'Kraken',
+                        buyPrice: 43250,
+                        sellPrice: 43680,
+                        profit: 1.0,
+                        profitUsd: 430
+                    },
+                    {
+                        coin: 'ETH',
+                        buyExchange: 'Coinbase',
+                        sellExchange: 'Bitstamp',
+                        buyPrice: 2640,
+                        sellPrice: 2665,
+                        profit: 0.95,
+                        profitUsd: 25
+                    },
+                    {
+                        coin: 'SOL',
+                        buyExchange: 'FTX',
+                        sellExchange: 'Huobi',
+                        buyPrice: 102.5,
+                        sellPrice: 103.8,
+                        profit: 1.27,
+                        profitUsd: 1.3
                     }
+                ]);
+            }, []);
 
-                    // Bitcoin Fee-Daten
-                    if (selectedCoin === 'bitcoin') {
-                        try {
-                            const btcResponse = await fetch('https://mempool.space/api/v1/fees/recommended');
-                            const btcResult = await btcResponse.json();
-                            gasData = {
-                                slow: btcResult.hourFee || 5,
-                                standard: btcResult.halfHourFee || 10,
-                                fast: btcResult.fastestFee || 20,
-                                instant: Math.floor((btcResult.fastestFee || 20) * 1.5),
-                                unit: 'sat/vB'
-                            };
-                        } catch (e) { console.log('Bitcoin API failed'); }
-                    }
-
-                    // Preise laden
-                    let prices = data.prices;
-                    let trends = data.trends;
-                    let isLive = false;
-
-                    try {
-                        const priceResponse = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,bitcoin,solana,matic-network,binancecoin,avalanche-2,arbitrum,optimism,tron&vs_currencies=usd&include_24hr_change=true');
-                        const priceResult = await priceResponse.json();
-                        
-                        if (priceResult && priceResult.ethereum) {
-                            prices = {
-                                ethereum: priceResult.ethereum?.usd || 3400,
-                                bitcoin: priceResult.bitcoin?.usd || 67000,
-                                solana: priceResult.solana?.usd || 130,
-                                polygon: priceResult['matic-network']?.usd || 0.85,
-                                bnb: priceResult.binancecoin?.usd || 310,
-                                avalanche: priceResult['avalanche-2']?.usd || 35,
-                                arbitrum: priceResult.arbitrum?.usd || 1.2,
-                                optimism: priceResult.optimism?.usd || 2.1,
-                                tron: priceResult.tron?.usd || 0.11
-                            };
-                            trends = {
-                                ethereum: priceResult.ethereum?.usd_24h_change || 0,
-                                bitcoin: priceResult.bitcoin?.usd_24h_change || 0,
-                                solana: priceResult.solana?.usd_24h_change || 0,
-                                polygon: priceResult['matic-network']?.usd_24h_change || 0,
-                                bnb: priceResult.binancecoin?.usd_24h_change || 0,
-                                avalanche: priceResult['avalanche-2']?.usd_24h_change || 0,
-                                arbitrum: priceResult.arbitrum?.usd_24h_change || 0,
-                                optimism: priceResult.optimism?.usd_24h_change || 0,
-                                tron: priceResult.tron?.usd_24h_change || 0
-                            };
-                            isLive = true;
-                        }
-                    } catch (e) { console.log('Price API failed'); }
-
-                    setData({
-                        gasData: { ...gasData, timestamp: new Date().toISOString() },
-                        prices, trends, isLive
-                    });
-
-                } catch (error) {
-                    console.error('Fetch error:', error);
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            useEffect(() => {
-                setLoading(true);
-                fetchData();
-                // Track page view
-                trackEvent('page_view', selectedCoin);
-            }, [selectedCoin]);
-
-            useEffect(() => {
-                const interval = setInterval(fetchData, 30000);
-                return () => clearInterval(interval);
-            }, [selectedCoin]);
-
-            // Coin Selection mit Analytics
-            const handleCoinSelect = (coinId) => {
-                setSelectedCoin(coinId);
-                trackEvent('coin_selection', coinId);
-            };
-
-            // Hilfsfunktionen
-            const calculateCost = (gasPrice, gasLimit) => {
-                if (!gasPrice || !data.prices[selectedCoin]) return 0;
-                
-                switch(selectedCoin) {
-                    case 'ethereum':
-                    case 'polygon':
-                    case 'bnb':
-                    case 'avalanche':
-                    case 'arbitrum':
-                        return ((gasPrice * gasLimit) / 1000000000) * data.prices[selectedCoin];
-                    case 'bitcoin':
-                        return ((gasPrice * gasLimit / 100000000) * data.prices[selectedCoin]);
-                    case 'solana':
-                    case 'optimism':
-                    case 'tron':
-                        return gasPrice * data.prices[selectedCoin];
-                    default:
-                        return 0;
-                }
-            };
-
-            const formatGasValue = (value) => {
-                if (selectedCoin === 'solana') return `${(value * 1000000).toFixed(0)} lamports`;
-                if (selectedCoin === 'tron' && value === 0) return 'Kostenlos';
-                return `${value} ${data.gasData.unit}`;
-            };
-
-            const getNativeValue = (value) => {
-                switch(selectedCoin) {
-                    case 'ethereum':
-                        return `${(value / 1000000000).toFixed(8)} ETH`;
-                    case 'bitcoin':
-                        return `${value} sat/vB`;
-                    case 'solana':
-                        return `${value.toFixed(6)} SOL`;
-                    case 'polygon':
-                        return `${(value / 1000000000).toFixed(8)} MATIC`;
-                    case 'bnb':
-                        return `${(value / 1000000000).toFixed(8)} BNB`;
-                    case 'avalanche':
-                        return `${(value / 1000000000).toFixed(8)} AVAX`;
-                    case 'arbitrum':
-                        return `${(value / 1000000000).toFixed(8)} ETH`;
-                    case 'optimism':
-                        return `${value.toFixed(6)} ETH`;
-                    case 'tron':
-                        return value > 0 ? `${value} TRX` : '';
-                    default:
-                        return '';
-                }
-            };
-
-            const getTransactionTypes = () => {
-                const types = {
-                    ethereum: [
-                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
-                        { name: 'ERC-20 Transfer', gasLimit: 65000, icon: '🪙' },
-                        { name: 'Uniswap Swap', gasLimit: 150000, icon: '🔄' },
-                        { name: 'NFT Mint', gasLimit: 200000, icon: '🖼️' },
-                        { name: 'DeFi Transaction', gasLimit: 350000, icon: '🏦' }
-                    ],
-                    bitcoin: [
-                        { name: 'Simple Transfer', gasLimit: 140, icon: '💸' },
-                        { name: 'Multi-Input TX', gasLimit: 250, icon: '🔗' },
-                        { name: 'SegWit Transfer', gasLimit: 110, icon: '⚡' },
-                        { name: 'Taproot Transfer', gasLimit: 100, icon: '🌿' },
-                        { name: 'Complex Script', gasLimit: 400, icon: '📜' }
-                    ],
-                    polygon: [
-                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
-                        { name: 'Token Transfer', gasLimit: 65000, icon: '🪙' },
-                        { name: 'QuickSwap Trade', gasLimit: 120000, icon: '🔄' },
-                        { name: 'NFT Mint', gasLimit: 180000, icon: '🖼️' },
-                        { name: 'DeFi Interaction', gasLimit: 300000, icon: '🏦' }
-                    ],
-                    bnb: [
-                        { name: 'Simple Transfer', gasLimit: 21000, icon: '💸' },
-                        { name: 'BEP-20 Transfer', gasLimit: 65000, icon: '🪙' },
-                        { name: 'PancakeSwap Trade', gasLimit: 150000, icon: '🥞' },
-                        { name: 'NFT Mint', gasLimit: 200000, icon: '🖼️' },
-                        { name: 'Yield Farming', gasLimit: 350000, icon: '🌾' }
-                    ]
+            const calculateTax = () => {
+                // Mock tax calculation
+                const mockResult = {
+                    totalGains: 15420,
+                    taxableGains: 12850,
+                    tax: 3212.50,
+                    recommendation: "Haltefrist von einem Jahr beachten für steuerfreie Veräußerung"
                 };
-                return types[selectedCoin] || types.ethereum;
+                setTaxResult(mockResult);
             };
 
-            const currentCoin = coins.find(c => c.id === selectedCoin);
-            const currentPrice = data.prices[selectedCoin] || 0;
-            const currentTrend = data.trends[selectedCoin] || 0;
+            const renderGasTracker = () => (
+                <div className="gas-tracker">
+                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
+                        <i className="fas fa-gas-pump"></i> Live Gas Fee Tracker
+                    </h2>
+                    <div className="coin-grid">
+                        {Object.entries(gasData).map(([coin, data]) => (
+                            <div key={coin} className="coin-card">
+                                <div className="coin-header">
+                                    <div className="coin-icon" style={{
+                                        background: coin === 'ETH' ? '#627eea' : 
+                                                   coin === 'BTC' ? '#f7931a' :
+                                                   coin === 'SOL' ? '#14f195' :
+                                                   coin === 'MATIC' ? '#8247e5' :
+                                                   coin === 'BNB' ? '#f3ba2f' : '#e84142'
+                                    }}>
+                                        {coin}
+                                    </div>
+                                    <div>
+                                        <div className="coin-name">{data.network}</div>
+                                        <div style={{color: '#a0a0a0', fontSize: '0.9rem'}}>{coin}</div>
+                                    </div>
+                                </div>
+                                <div className="fee-display">
+                                    <span className="fee-value">{data.fee} {data.unit}</span>
+                                    <span className="fee-usd">{data.usd}</span>
+                                </div>
+                                <div style={{fontSize: '0.8rem', color: '#a0a0a0', marginTop: '10px'}}>
+                                    <i className="fas fa-clock"></i> Letztes Update: {new Date().toLocaleTimeString()}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{textAlign: 'center', color: '#a0a0a0', fontSize: '0.9rem'}}>
+                        <i className="fas fa-sync-alt"></i> Auto-Refresh alle 30 Sekunden
+                    </div>
+                </div>
+            );
 
-            if (loading) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-                        <div className="text-center">
-                            <div className="w-12 h-12 text-purple-400 animate-pulse mx-auto mb-4"><Fuel /></div>
-                            <p className="text-purple-300">Loading {currentCoin?.name} Data...</p>
+            const renderArbitrageFinder = () => (
+                <div className="arbitrage-finder">
+                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
+                        <i className="fas fa-chart-line"></i> Crypto Arbitrage Finder
+                    </h2>
+                    <div className="exchange-grid">
+                        {arbitrageData.map((item, index) => (
+                            <div key={index} className={`arbitrage-card ${item.profit > 1 ? 'opportunity' : ''}`}>
+                                {item.profit > 1 && (
+                                    <div className="profit-badge">
+                                        <i className="fas fa-fire"></i> HOT OPPORTUNITY
+                                    </div>
+                                )}
+                                <h3 style={{margin: '0 0 15px 0', fontSize: '1.5rem'}}>
+                                    {item.coin}
+                                </h3>
+                                <div style={{marginBottom: '15px'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                                        <span><i className="fas fa-shopping-cart"></i> Kaufen: {item.buyExchange}</span>
+                                        <span style={{color: '#10b981'}}>${item.buyPrice.toLocaleString()}</span>
+                                    </div>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '8px'}}>
+                                        <span><i className="fas fa-hand-holding-usd"></i> Verkaufen: {item.sellExchange}</span>
+                                        <span style={{color: '#ef4444'}}>${item.sellPrice.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                                <div style={{
+                                    padding: '15px',
+                                    background: 'rgba(16, 185, 129, 0.2)',
+                                    borderRadius: '10px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{fontSize: '1.2rem', fontWeight: 'bold', color: '#10b981'}}>
+                                        +{item.profit.toFixed(2)}% Profit
+                                    </div>
+                                    <div style={{fontSize: '0.9rem', color: '#a0a0a0'}}>
+                                        ≈ ${item.profitUsd} pro {item.coin}
+                                    </div>
+                                </div>
+                                <div style={{fontSize: '0.8rem', color: '#a0a0a0', marginTop: '10px', textAlign: 'center'}}>
+                                    <i className="fas fa-exclamation-triangle"></i> Inklusive Trading Fees berechnet
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{textAlign: 'center', color: '#a0a0a0', fontSize: '0.9rem'}}>
+                        <i className="fas fa-sync-alt"></i> Daten aktualisiert alle 60 Sekunden
+                    </div>
+                </div>
+            );
+
+            const renderTaxCalculator = () => (
+                <div className="tax-calculator">
+                    <h2 style={{textAlign: 'center', marginBottom: '30px'}}>
+                        <i className="fas fa-calculator"></i> Crypto Steuer Rechner (Deutschland)
+                    </h2>
+                    
+                    <div className="form-section">
+                        <h3><i className="fas fa-coins"></i> Krypto Transaktionen</h3>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px'}}>
+                            <div className="form-group">
+                                <label>Kaufdatum</label>
+                                <input type="date" />
+                            </div>
+                            <div className="form-group">
+                                <label>Verkaufsdatum</label>
+                                <input type="date" />
+                            </div>
+                            <div className="form-group">
+                                <label>Cryptocurrency</label>
+                                <select>
+                                    <option>Bitcoin (BTC)</option>
+                                    <option>Ethereum (ETH)</option>
+                                    <option>Solana (SOL)</option>
+                                    <option>Andere</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Menge</label>
+                                <input type="number" placeholder="z.B. 0.5" step="0.00001" />
+                            </div>
+                            <div className="form-group">
+                                <label>Kaufpreis (€)</label>
+                                <input type="number" placeholder="z.B. 35000" />
+                            </div>
+                            <div className="form-group">
+                                <label>Verkaufspreis (€)</label>
+                                <input type="number" placeholder="z.B. 45000" />
+                            </div>
                         </div>
                     </div>
-                );
-            }
+
+                    <div className="form-section">
+                        <h3><i className="fas fa-user"></i> Persönliche Daten</h3>
+                        <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px'}}>
+                            <div className="form-group">
+                                <label>Steuersatz (%)</label>
+                                <select>
+                                    <option value="0">0% (unter Freibetrag)</option>
+                                    <option value="14">14% (Eingangssteuersatz)</option>
+                                    <option value="25">25% (Durchschnitt)</option>
+                                    <option value="42">42% (Spitzensteuersatz)</option>
+                                    <option value="45">45% (Höchststeuersatz)</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Haltefrist erfüllt? (>1 Jahr)</label>
+                                <select>
+                                    <option value="no">Nein - Steuerpflichtig</option>
+                                    <option value="yes">Ja - Steuerfrei</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{textAlign: 'center', marginTop: '20px'}}>
+                        <button className="calculate-btn" onClick={calculateTax}>
+                            <i className="fas fa-calculator"></i> Steuer berechnen
+                        </button>
+                    </div>
+
+                    {taxResult && (
+                        <div className="result-card">
+                            <h3 style={{color: '#4ade80', marginBottom: '20px'}}>
+                                <i className="fas fa-check-circle"></i> Steuerberechnung
+                            </h3>
+                            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px'}}>
+                                <div>
+                                    <div style={{color: '#a0a0a0'}}>Gesamtgewinn</div>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#4ade80'}}>
+                                        €{taxResult.totalGains.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{color: '#a0a0a0'}}>Steuerpflichtiger Gewinn</div>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#f59e0b'}}>
+                                        €{taxResult.taxableGains.toLocaleString()}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{color: '#a0a0a0'}}>Zu zahlende Steuer</div>
+                                    <div style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#ef4444'}}>
+                                        €{taxResult.tax.toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                            <div style={{
+                                marginTop: '20px',
+                                padding: '15px',
+                                background: 'rgba(59, 130, 246, 0.2)',
+                                borderRadius: '10px',
+                                color: '#60a5fa'
+                            }}>
+                                <i className="fas fa-lightbulb"></i> <strong>Tipp:</strong> {taxResult.recommendation}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{fontSize: '0.8rem', color: '#a0a0a0', textAlign: 'center', marginTop: '20px'}}>
+                        <i className="fas fa-exclamation-triangle"></i> Dies ist keine Steuerberatung. Konsultieren Sie einen Steuerberater.
+                    </div>
+                </div>
+            );
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
-                    <div className="max-w-6xl mx-auto">
-                        {/* Header */}
-                        <div className="text-center mb-8">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-8 h-8 text-purple-400 mr-3"><Fuel /></div>
-                                <h1 className="text-4xl font-bold text-white">Gas Tracker</h1>
-                            </div>
-                            <p className="text-purple-300 mb-6">Live Transaktionsgebühren für 9 Blockchains</p>
-                            
-                            {/* Coin Selector */}
-                            <div className="mb-6">
-                                <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-2xl p-4 mx-auto max-w-5xl">
-                                    <div className="flex flex-wrap justify-center gap-3">
-                                        {coins.map(coin => (
-                                            <button
-                                                key={coin.id}
-                                                onClick={() => handleCoinSelect(coin.id)}
-                                                className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-300 font-medium ${
-                                                    selectedCoin === coin.id 
-                                                        ? `bg-gradient-to-r ${coin.color} text-white shadow-lg transform scale-105` 
-                                                        : 'text-gray-300 bg-slate-700/50 hover:text-white hover:bg-slate-600/50'
-                                                }`}
-                                            >
-                                                <span className="text-lg">{coin.icon}</span>
-                                                <span className="text-sm">{coin.symbol}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Price Display */}
-                            <div className="flex items-center justify-center gap-6">
-                                <div className="flex items-center gap-2 text-purple-200">
-                                    <span className="font-semibold">{currentCoin?.symbol}:</span>
-                                    <span className="font-bold text-white text-xl">
-                                        ${currentPrice.toFixed(selectedCoin === 'bitcoin' ? 0 : 2)}
-                                    </span>
-                                    {data.isLive && <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" title="Live data"></span>}
-                                    {!data.isLive && <span className="text-xs text-orange-400">(demo)</span>}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {currentTrend > 0 ? <ArrowUp /> : currentTrend < 0 ? <ArrowDown /> : <Minus />}
-                                    <span className={currentTrend > 0 ? 'text-green-400' : currentTrend < 0 ? 'text-red-400' : 'text-gray-400'}>
-                                        {Math.abs(currentTrend).toFixed(1)}%
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                <div className="container">
+                    <div className="header">
+                        <h1>Crypto Tools Suite</h1>
+                        <p>Gas Tracker • Arbitrage Finder • Steuer Rechner</p>
+                    </div>
 
-                        {/* Fee Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                            {['slow', 'standard', 'fast', 'instant'].map((speed) => {
-                                const speedConfig = {
-                                    slow: { icon: <Clock />, label: 'Langsam', color: 'text-green-400 bg-green-400/10 border-green-400/20', desc: 'Geld sparen', time: '~5 min' },
-                                    standard: { icon: <Minus />, label: 'Standard', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20', desc: 'Ausgewogen', time: '~2 min' },
-                                    fast: { icon: <Zap />, label: 'Schnell', color: 'text-orange-400 bg-orange-400/10 border-orange-400/20', desc: 'Schnell', time: '~30s' },
-                                    instant: { icon: <ArrowUp />, label: 'Sofort', color: 'text-red-400 bg-red-400/10 border-red-400/20', desc: 'Notfall', time: '~15s' }
-                                };
-                                
-                                const config = speedConfig[speed];
-                                
-                                return (
-                                    <div 
-                                        key={speed} 
-                                        className={`bg-slate-800/50 backdrop-blur border rounded-xl p-6 text-center hover:scale-105 transition-all duration-300 cursor-pointer ${config.color}`}
-                                        onClick={() => trackEvent('fee_card_click', selectedCoin, speed)}
-                                    >
-                                        <div className="flex items-center justify-center mb-3">
-                                            {config.icon}
-                                            <span className="ml-2 font-semibold">{config.label}</span>
-                                        </div>
-                                        <div className="text-2xl font-bold text-white mb-1">
-                                            {formatGasValue(data.gasData[speed])}
-                                        </div>
-                                        <div className="text-sm opacity-70 mb-2">{config.desc}</div>
-                                        <div className="text-xs opacity-60 mb-1">{config.time}</div>
-                                        <div className="text-xs text-purple-300">
-                                            {getNativeValue(data.gasData[speed])}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                    <div className="navigation">
+                        <button 
+                            className={`nav-button ${activeTab === 'gas-tracker' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('gas-tracker')}
+                        >
+                            <i className="fas fa-gas-pump"></i>
+                            Gas Tracker
+                        </button>
+                        <button 
+                            className={`nav-button ${activeTab === 'arbitrage' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('arbitrage')}
+                        >
+                            <i className="fas fa-chart-line"></i>
+                            Arbitrage Finder
+                        </button>
+                        <button 
+                            className={`nav-button ${activeTab === 'tax' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('tax')}
+                        >
+                            <i className="fas fa-calculator"></i>
+                            Steuer Rechner
+                        </button>
+                    </div>
 
-                        {/* Cost Calculator */}
-                        <div className="bg-slate-800/30 backdrop-blur border border-slate-700/50 rounded-xl p-6 mb-8">
-                            <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-                                <div className="w-6 h-6 mr-2 text-purple-400"><TrendingUp /></div>
-                                {currentCoin?.name} Kostenrechner
-                            </h2>
-                            
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-slate-700">
-                                            <th className="text-left text-purple-300 py-3 px-2">Transaktionstyp</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">
-                                                {selectedCoin === 'bitcoin' ? 'Größe (vBytes)' : selectedCoin === 'solana' ? 'Gebühr' : 'Gas Limit'}
-                                            </th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Langsam</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Standard</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Schnell</th>
-                                            <th className="text-center text-purple-300 py-3 px-2">Sofort</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {getTransactionTypes().map((tx, index) => (
-                                            <tr key={index} className="border-b border-slate-700/30 hover:bg-slate-700/20">
-                                                <td className="py-4 px-2">
-                                                    <div className="flex items-center">
-                                                        <span className="text-lg mr-3">{tx.icon}</span>
-                                                        <span className="text-white font-medium">{tx.name}</span>
-                                                    </div>
-                                                </td>
-                                                <td className="text-center py-4 px-2 text-purple-200">
-                                                    {selectedCoin === 'solana' ? '~0.000005 SOL' : tx.gasLimit.toLocaleString()}
-                                                </td>
-                                                {['slow', 'standard', 'fast', 'instant'].map(speed => (
-                                                    <td key={speed} className="text-center py-4 px-2">
-                                                        <div className="text-white font-medium">
-                                                            ${calculateCost(data.gasData[speed], tx.gasLimit).toFixed(4)}
-                                                        </div>
-                                                    </td>
-                                                ))}
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div className="tool-content">
+                        {activeTab === 'gas-tracker' && renderGasTracker()}
+                        {activeTab === 'arbitrage' && renderArbitrageFinder()}
+                        {activeTab === 'tax' && renderTaxCalculator()}
+                    </div>
 
-                        {/* Optimization Tips */}
-                        <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 backdrop-blur border border-purple-500/30 rounded-xl p-6 mb-8">
-                            <h3 className="text-lg font-semibold text-purple-300 mb-4">💡 {currentCoin?.name} Optimierungs-Tipps</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-purple-200">
-                                {selectedCoin === 'ethereum' && (
-                                    <>
-                                        <div>• Nutze Layer 2 Lösungen wie Arbitrum, Optimism oder Polygon</div>
-                                        <div>• Wochenendmorgen haben oft niedrigere Gebühren</div>
-                                        <div>• "Langsam" für nicht-dringende Transaktionen verwenden</div>
-                                        <div>• Mehrere Transaktionen wenn möglich bündeln</div>
-                                        <div>• EIP-1559: Base Fee + Priority Fee beachten</div>
-                                        <div>• Gas-Tracker verwenden für optimales Timing</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'bitcoin' && (
-                                    <>
-                                        <div>• SegWit-Adressen verwenden (niedrigere vByte-Kosten)</div>
-                                        <div>• UTXOs während niedriger Gebühren konsolidieren</div>
-                                        <div>• Lightning Network für kleine, häufige Zahlungen</div>
-                                        <div>• Batch-Transaktionen für mehrere Empfänger</div>
-                                        <div>• Taproot-Adressen für komplexere Scripts</div>
-                                        <div>• Wochenend-Gebühren sind meist günstiger</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'solana' && (
-                                    <>
-                                        <div>• Konstant niedrige Gebühren (~0.00025$)</div>
-                                        <div>• Priority Fees für schnellere Verarbeitung</div>
-                                        <div>• Rent für Account-Erstellung beachten</div>
-                                        <div>• Fokus auf Netzwerk-Überlastung statt Gebühren</div>
-                                        <div>• Compute Units optimieren bei Smart Contracts</div>
-                                        <div>• Parallel-Transaktionen möglich</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'polygon' && (
-                                    <>
-                                        <div>• Extrem niedrige Gebühren - ideal für DeFi-Experimente</div>
-                                        <div>• Bridge-Kosten von Ethereum beachten</div>
-                                        <div>• MATIC für Gasgebühren in Wallet halten</div>
-                                        <div>• QuickSwap und SushiSwap für günstige Swaps</div>
-                                        <div>• Aave, Compound auf Polygon für günstige Lending</div>
-                                        <div>• EIP-1559 auch auf Polygon verfügbar</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'bnb' && (
-                                    <>
-                                        <div>• 95% günstiger als Ethereum für DeFi</div>
-                                        <div>• BNB für Gasgebühren benötigt</div>
-                                        <div>• PancakeSwap für niedrigste DEX-Gebühren</div>
-                                        <div>• Venus, Alpaca Finance für Yield Farming</div>
-                                        <div>• Validator-Rotation alle 24h beachten</div>
-                                        <div>• Cross-Chain-Bridges für Asset-Transfer</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'avalanche' && (
-                                    <>
-                                        <div>• Subnets für spezielle Anwendungen nutzen</div>
-                                        <div>• C-Chain für DeFi, X-Chain für Asset-Transfer</div>
-                                        <div>• Trader Joe, Pangolin für günstige Swaps</div>
-                                        <div>• AVAX für alle drei Chains benötigt</div>
-                                        <div>• Schnelle Finalisierung (~1-2 Sekunden)</div>
-                                        <div>• Benqi, Aave für Lending-Protokolle</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'arbitrum' && (
-                                    <>
-                                        <div>• 90-95% günstiger als Ethereum Mainnet</div>
-                                        <div>• Vollständige Ethereum-Kompatibilität</div>
-                                        <div>• 7-Tage-Wartezeit beim Withdrawal zu Mainnet</div>
-                                        <div>• Uniswap V3, SushiSwap nativ verfügbar</div>
-                                        <div>• Arbitrum Nova für Gaming und Social Apps</div>
-                                        <div>• ETH für Gasgebühren verwenden</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'optimism' && (
-                                    <>
-                                        <div>• Optimistic Rollups = Ethereum-Sicherheit</div>
-                                        <div>• OP-Token-Rewards für aktive Nutzer</div>
-                                        <div>• RetroPGF für Public Goods Funding</div>
-                                        <div>• Velodrome für effiziente Token-Swaps</div>
-                                        <div>• 7-Tage Challenge-Period beim Withdrawal</div>
-                                        <div>• Synthetix, Uniswap V3 als Haupt-DeFi-Protokolle</div>
-                                    </>
-                                )}
-                                {selectedCoin === 'tron' && (
-                                    <>
-                                        <div>• Viele Basis-Transaktionen völlig kostenfrei</div>
-                                        <div>• Energy/Bandwidth-System statt traditionellem Gas</div>
-                                        <div>• TRX staken für kostenlose Daily-Transaktionen</div>
-                                        <div>• SunSwap (V1 & V2) für Token-Exchanges</div>
-                                        <div>• JustLend für DeFi-Lending ohne hohe Gebühren</div>
-                                        <div>• USDT-TRC20 sehr beliebt für Stablecoin-Transfers</div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="text-center text-purple-400 text-sm">
-                            <div className="mb-2">
-                                Aktualisiert: {new Date(data.gasData.timestamp).toLocaleTimeString()} • Alle 30s refresh
-                            </div>
-                            <div className="text-xs opacity-60 mb-4">
-                                {data.isLive ? '🟢 Live-Daten von APIs' : '🟡 Demo-Daten - APIs nicht verfügbar'}
-                            </div>
-                            <div className="flex items-center justify-center gap-4 mb-4">
-                                <a 
-                                    href="https://twitter.com/cryptosnapnews" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 text-purple-300 hover:text-white transition-colors duration-300"
-                                    onClick={() => trackEvent('social_click', 'twitter')}
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                                    </svg>
-                                    <span>Follow @cryptosnapnews</span>
-                                </a>
-                            </div>
-                            <div className="text-xs opacity-40">
-                                Made with ❤️ for the Crypto Community
-                            </div>
-                        </div>
+                    <div className="social-links">
+                        <a href="https://twitter.com/cryptosnapnews" target="_blank" rel="noopener noreferrer">
+                            <i className="fab fa-twitter"></i> @cryptosnapnews
+                        </a>
+                        <a href="https://github.com" target="_blank" rel="noopener noreferrer">
+                            <i className="fab fa-github"></i> GitHub
+                        </a>
+                        <a href="mailto:contact@crypto-tools.de">
+                            <i className="fas fa-envelope"></i> Contact
+                        </a>
                     </div>
                 </div>
             );
         };
 
-        ReactDOM.render(<MultiChainFeeTracker />, document.getElementById('root'));
+        ReactDOM.render(<CryptoToolsSuite />, document.getElementById('root'));
     </script>
 </body>
 </html>
